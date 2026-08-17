@@ -195,6 +195,7 @@
     border:1px solid var(--line); border-radius:14px; background:#fff; color:var(--ink); font:inherit; text-align:left; cursor:pointer;
     transition:transform .2s, box-shadow .2s, border-color .2s;}
   .junior-contest-btn:hover{transform:translateY(-2px); border-color:rgba(198,160,46,.45); box-shadow:0 8px 22px rgba(11,18,32,.08);}
+  .junior-contest-btn.chosen{border-color:#7B2D6E; background:#FBF1F9;}
   .junior-contest-btn:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
   .junior-contest-btn b{display:block; font-size:14px;}
   .junior-contest-btn small{display:block; margin-top:4px; color:var(--muted); font-size:12px; line-height:1.4;}
@@ -454,7 +455,7 @@ function juniorclassic(worldTitle){
   var items = ideas.map(function(idea, i){
     if (isClassicMusical) return '<button class="junior-contest-btn" onclick="openClassicMusicalAction(' + i + ')"><span><b>' + idea[0] + '</b><small>' + idea[1] + '</small></span><span class="arrow">›</span></button>';
     if (isIndieFavorite) return '<button class="junior-contest-btn" onclick="openIndieFavoriteAction(' + i + ')"><span><b>' + idea[0] + '</b><small>' + idea[1] + '</small></span><span class="arrow">›</span></button>';
-    return '<li style="font-size:14px; line-height:1.55; margin-top:12px"><b>' + idea[0] + '</b> — ' + idea[1] + '</li>';
+    return '<button class="junior-contest-btn" onclick="selectBiggestHitButton(this)"><span><b>' + idea[0] + '</b><small>' + idea[1] + '</small></span><span class="arrow">›</span></button>';
   }).join("");
   var m = document.createElement("div");
   m.id = "peek"; m.className = "cinema";
@@ -468,11 +469,16 @@ function juniorclassic(worldTitle){
       (isClassicMusical ? '<div style="font-size:15px; font-weight:600; line-height:1.5; margin-top:8px">“The hills are alive with the sound of Muzak!”</div>' : '') +
       '<p style="font-size:14px; line-height:1.6; color:var(--muted); margin-top:8px">' + (isIndieFavorite ? 'Vote for a favorite film, choose a scene, change the plot, add new characters, and bring your 60-second version to life with a grown-up. Selected versions can become part of an official Junior short—alongside the canon, never replacing it.' : isClassicMusical ? 'Act it out with a grown-up. Selected scenes can become part of an official Junior short—alongside the canon, never rewriting it.' : 'Act it out with a grown-up. Selected twists can become part of an official Junior short—alongside the canon, never rewriting it.') + '</p>' +
       (isIndieFavorite || isClassicMusical ? '<div class="eyebrow gold" style="margin:20px 0 0">Vote &amp; Create</div>' : '') +
-      (isClassicMusical || isIndieFavorite ? '<div class="junior-contest-actions">' + items + '</div>' : '<ul style="margin:18px 0 0; padding-left:20px">' + items + '</ul>') +
+      '<div class="junior-contest-actions">' + items + '</div>' +
       '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:13px; line-height:1.55; color:#8A6E14; font-weight:600; text-align:center">A grown-up submits the scene. Every entry is reviewed before it can appear.</div>' +
       '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to story worlds</button></div>' +
     '</div></div>';
   document.body.appendChild(m);
+}
+
+function selectBiggestHitButton(button){
+  document.querySelectorAll("#peek .junior-contest-btn").forEach(function(choice){ choice.classList.remove("chosen"); });
+  button.classList.add("chosen");
 }
 
 function openIndieFavoriteAction(actionIndex){
