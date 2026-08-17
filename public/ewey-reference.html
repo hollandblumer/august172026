@@ -444,7 +444,7 @@ function juniorclassic(worldTitle){
     ["Choose the Song Scene", "Choose a song scene in the movie and decide how you would do it differently."],
     ["Add to the Lyrics", "Change whatever you want. The sillier, the better!"],
     ["Add New Singers", "Use your imagination to create a singing role for all your family and best friends."],
-    ["Add Fun!", "Act out a new 60-second moment, such as: “These Are a Few of My Least Favorite Things!”"]
+    ["Add Fun!", "Act out a new 60-second musical moment with your own playful lyric twist."]
   ] : [
     ["Pick the Hero", "Choose the character who leads your scene and decide what they want."],
     ["Add the Sidekick", "Give the hero an unexpected partner who helps—or makes everything harder."],
@@ -556,13 +556,14 @@ function openClassicMusicalAction(actionIndex){
   }
   var labels = ["", "Choose your song scene", "Rewrite the lyrics", "Add your singers", "Add a silly twist"];
   var prompts = ["", "Pick the musical moment you want to make your own.", "Turn a famous lyric into something surprising and funny.", "Give everyone in your family or friend group a singing role.", "Imagine a brand-new 60-second musical moment."];
+  var lyricTwists = ["", "I packed my courage and danced through the rain!", "The moon missed curfew, so the stars sang louder!", "Our kitchen band is playing pots and pans tonight!", "The castle woke up wearing sneakers!"];
   m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
     '<div style="height:90px;background:linear-gradient(135deg,#7B2D6E,#3E1738)"></div>' +
     '<div style="padding:28px"><div class="eyebrow gold">Create your musical scene</div>' +
     '<div style="font-weight:700;font-size:26px">' + labels[actionIndex] + '</div><p style="font-size:14px;line-height:1.6;color:var(--muted);margin-top:8px">' + prompts[actionIndex] + '</p>' +
     '<div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:20px">Pick a song scene</div>' +
     '<div class="musical-chips"><button class="musical-chip selected" onclick="selectMusicalChip(this)">Opening number</button><button class="musical-chip" onclick="selectMusicalChip(this)">Big duet</button><button class="musical-chip" onclick="selectMusicalChip(this)">Grand finale</button></div>' +
-    '<div style="margin-top:18px;background:var(--goldsoft);border:1px solid rgba(198,160,46,.27);border-radius:14px;padding:16px"><div class="eyebrow gold" style="margin-bottom:7px">Your lyric twist</div><div style="font-size:16px;font-weight:600;line-height:1.5">“These are a few of my least favorite things!”</div></div>' +
+    '<div style="margin-top:18px;background:var(--goldsoft);border:1px solid rgba(198,160,46,.27);border-radius:14px;padding:16px"><div class="eyebrow gold" style="margin-bottom:7px">Your lyric twist</div><div style="font-size:16px;font-weight:600;line-height:1.5">“' + lyricTwists[actionIndex] + '”</div></div>' +
     '<div style="font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:18px">Choose your singers</div>' +
     '<div class="musical-chips"><button class="musical-chip selected" onclick="selectMusicalChip(this)">🎤 You</button><button class="musical-chip" onclick="selectMusicalChip(this)">🧑 Grown-up</button><button class="musical-chip" onclick="selectMusicalChip(this)">👨‍👩‍👧 Family &amp; friends</button></div>' +
     '<div style="margin-top:20px;background:var(--ink);color:#fff;border-radius:16px;padding:18px"><b>Film your musical scene</b><p style="font-size:13px;line-height:1.55;opacity:.72;margin-top:6px">Act it out at home in 60 seconds or less. A grown-up submits it, and every entry is reviewed.</p><button class="btn gold" style="width:100%;margin-top:14px" onclick="openClassicMusicalUpload()">Start filming &rarr;</button></div>' +
