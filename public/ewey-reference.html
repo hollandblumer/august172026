@@ -207,12 +207,7 @@
   .musical-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
   .musical-chip{font:inherit; font-size:12px; font-weight:600; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; cursor:pointer;}
   .musical-chip.selected{background:var(--ink); color:#fff; border-color:var(--ink);}
-  .hit-character-grid{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:10px;}
-  .hit-character{padding:18px 8px; border:2px solid var(--line); border-radius:18px; background:#fff; color:#385173; font:inherit; font-weight:600; cursor:pointer;}
-  .hit-character span{display:block; font-size:30px; margin-bottom:10px;}
-  .hit-character.selected{border-color:#7B2D6E; background:#FBF1F9; color:#512044;}
-  .hit-character:focus-visible{outline:2px solid var(--gold); outline-offset:2px;}
-  @media(max-width:620px){.audience-grid,.junior-worlds{grid-template-columns:1fr}.audience-card{min-height:210px}.wrap{padding-top:88px}.studio-intel{padding:28px 22px}.studio-intel-stats{grid-template-columns:1fr}.studio-intel-stat{padding:18px}.studio-intel .junior-card-title{font-size:27px}.hit-character{padding:15px 5px;font-size:13px}}
+  @media(max-width:620px){.audience-grid,.junior-worlds{grid-template-columns:1fr}.audience-card{min-height:210px}.wrap{padding-top:88px}.studio-intel{padding:28px 22px}.studio-intel-stats{grid-template-columns:1fr}.studio-intel-stat{padding:18px}.studio-intel .junior-card-title{font-size:27px}}
 </style>
 </head>
 <body>
@@ -436,7 +431,6 @@ function newdigs(){
 function juniorclassic(worldTitle){
   var existing = document.getElementById("peek");
   if (existing) existing.remove();
-  if (worldTitle === "Biggest Hit Movie") { openBiggestHitMovie(); return; }
   var isIndieFavorite = worldTitle === "Indie Favorite";
   var isClassicMusical = worldTitle === "Classic Movie (Musical)";
   var ideas = isIndieFavorite ? [
@@ -479,39 +473,6 @@ function juniorclassic(worldTitle){
       '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to story worlds</button></div>' +
     '</div></div>';
   document.body.appendChild(m);
-}
-
-function openBiggestHitMovie(){
-  var m = document.createElement("div");
-  m.id = "peek"; m.className = "cinema";
-  m.onclick = function(){ m.remove(); };
-  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()"><div style="padding:20px">' +
-    '<div style="background:linear-gradient(135deg,#7B2D6E,#4B1D48);color:#fff;border-radius:22px;padding:28px 26px"><div class="eyebrow" style="color:rgba(255,255,255,.8)">(Insert classic movie IP here)</div><div style="font-family:Georgia,serif;font-weight:700;font-size:clamp(30px,6vw,42px);line-height:1.08;margin-top:10px">Interact with (Insert Classic Movie IP Here).</div><p style="font-size:17px;line-height:1.5;opacity:.88;margin-top:16px">Pick a character, give them a twist, act it out. The best twists get folded into the show\'s official Junior short.</p></div>' +
-    '<div class="eyebrow" style="color:#385173;margin-top:24px">Pick a character</div>' +
-    '<div class="hit-character-grid"><button class="hit-character selected" onclick="selectHitCharacter(this,\'hero\')"><span>🦁</span>(Hero)</button><button class="hit-character" onclick="selectHitCharacter(this,\'sidekick\')"><span>🐭</span>(Sidekick)</button><button class="hit-character" onclick="selectHitCharacter(this,\'villain\')"><span>🐲</span>(Villain)</button></div>' +
-    '<div style="margin-top:18px;background:#fff;border:2px dashed var(--line);border-radius:18px;padding:20px"><div class="eyebrow" style="color:#7B2D6E">Your twist</div><div id="hitTwist" style="font-size:18px;font-style:italic;line-height:1.5;color:#173052">“What if the Hero has to babysit the Villain\'s kid for a day?”</div></div>' +
-    '<div style="margin-top:18px;background:#123156;color:#fff;border-radius:22px;padding:24px"><div style="font-family:Georgia,serif;font-size:26px;font-weight:700">Film your scene</div><p style="font-size:15px;line-height:1.55;opacity:.82;margin-top:8px">Act it out at home, 60 seconds or less. Selected twists are animated by EWEy\'s creative team and become part of the official Junior Mash-Up.</p><button class="btn gold" style="margin-top:16px" onclick="openBiggestHitUpload()">Start filming &rarr;</button></div>' +
-    '<button class="btn" style="width:100%;margin-top:14px" onclick="document.getElementById(\'peek\').remove()">Back to story worlds</button></div></div>';
-  document.body.appendChild(m);
-}
-
-function selectHitCharacter(button, role){
-  document.querySelectorAll(".hit-character").forEach(function(choice){ choice.classList.remove("selected"); });
-  button.classList.add("selected");
-  var twists = {hero:"What if the Hero has to babysit the Villain's kid for a day?",sidekick:"What if the Sidekick accidentally becomes the hero for a day?",villain:"What if the Villain has to save the party they planned to ruin?"};
-  document.getElementById("hitTwist").textContent = "“" + twists[role] + "”";
-}
-
-function openBiggestHitUpload(){
-  var m = document.getElementById("peek");
-  if (!m) return;
-  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()"><div style="padding:32px 28px"><div class="eyebrow gold" style="text-align:center">Biggest Hit Movie</div><div style="font-weight:700;font-size:28px;text-align:center">Film your scene.</div><div class="card" style="width:100%;padding:24px;margin-top:28px"><span style="display:flex;align-items:center;gap:14px"><span style="font-size:28px">⬆️</span><span><b style="display:block">Upload your 1-minute vertical</b><span style="display:block;font-size:13px;color:var(--muted);margin-top:4px">Biggest Hit Movie · Junior Challenge</span></span></span></div><button class="btn gold big" style="margin-top:24px" onclick="submitBiggestHitVideo()">UPLOAD VIDEO</button><div style="margin-top:14px;font-size:12.5px;color:var(--muted);text-align:center">A grown-up must approve and submit the video. Every entry is reviewed.</div><button class="btn" style="width:100%;margin-top:18px" onclick="document.getElementById(\'peek\').remove();openBiggestHitMovie()">Back to your scene</button></div></div>';
-}
-
-function submitBiggestHitVideo(){
-  var m = document.getElementById("peek");
-  if (!m) return;
-  m.innerHTML = '<div class="panel" style="background:var(--dark);color:#fff" onclick="event.stopPropagation()"><div style="padding:52px 28px;text-align:center"><div style="font-size:54px">✨</div><div style="font-weight:700;font-size:27px;line-height:1.25;margin-top:18px">Your twist is headed to the creative team.</div><p style="font-size:14px;opacity:.6;margin-top:10px">Pending grown-up and studio review</p><button class="btn white big" style="margin-top:26px" onclick="document.getElementById(\'peek\').remove()">Done</button></div></div>';
 }
 
 function openIndieFavoriteAction(actionIndex){
