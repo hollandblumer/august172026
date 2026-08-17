@@ -178,6 +178,13 @@
   .junior-pill{font-size:11.5px; color:var(--muted); background:var(--canvas); border:1px solid var(--line); border-radius:999px; padding:6px 10px;}
   .junior-worlds{grid-template-columns:repeat(2,minmax(0,1fr)); max-width:680px; gap:14px;}
   .junior-icon{font-size:30px; margin-bottom:14px;}
+  .studio-intel{max-width:680px; margin:18px auto 0; padding:36px; background:var(--ink); color:#fff;}
+  .studio-intel .junior-card-title{font-size:32px; font-family:Georgia,serif; margin-top:12px;}
+  .studio-intel-copy{font-size:18px; line-height:1.55; opacity:.88; margin-top:14px;}
+  .studio-intel-stats{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:22px;}
+  .studio-intel-stat{padding:22px 16px; border-radius:18px; background:rgba(255,255,255,.09);}
+  .studio-intel-stat strong{display:block; color:#F59A23; font-family:Georgia,serif; font-size:30px; line-height:1;}
+  .studio-intel-stat span{display:block; font-size:14px; line-height:1.35; margin-top:8px;}
   .junior-action{display:flex; gap:16px; align-items:flex-start;}
   .junior-action-icon{font-size:26px; flex:0 0 auto;}
   .junior-vote{position:relative; overflow:hidden; display:flex; justify-content:space-between; gap:12px; padding:16px 18px;}
@@ -200,7 +207,7 @@
   .musical-chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;}
   .musical-chip{font:inherit; font-size:12px; font-weight:600; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; cursor:pointer;}
   .musical-chip.selected{background:var(--ink); color:#fff; border-color:var(--ink);}
-  @media(max-width:620px){.audience-grid,.junior-worlds{grid-template-columns:1fr}.audience-card{min-height:210px}.wrap{padding-top:88px}}
+  @media(max-width:620px){.audience-grid,.junior-worlds{grid-template-columns:1fr}.audience-card{min-height:210px}.wrap{padding-top:88px}.studio-intel{padding:28px 22px}.studio-intel-stats{grid-template-columns:1fr}.studio-intel-stat{padding:18px}.studio-intel .junior-card-title{font-size:27px}}
 </style>
 </head>
 <body>
@@ -392,7 +399,7 @@ function scJuniorWorlds(){
   var worlds = [["🐾","New Digs","Cheryl Fudge","newdigs()"],["🎬","Biggest Hit Movie","Studio world","juniorclassic('Biggest Hit Movie')"],["☀️","Indie Favorite","New Contest Content","juniorclassic('Indie Favorite')"],["🏰","Classic Movie (Musical)","New Contest Content","juniorclassic('Classic Movie (Musical)')"]];
   var cards = worlds.map(function(w,i){return '<div class="card click rise" onclick="'+w[3]+'" style="animation-delay:'+(i*70)+'ms"><div class="junior-icon">'+w[0]+'</div><div class="eyebrow '+(i?'':'gold')+'" style="margin-bottom:6px">'+(i?'Studio IP':'EWEy original')+'</div><div class="junior-card-title">'+w[1]+'</div><p class="junior-copy">'+w[2]+'</p></div>';}).join("");
   el.innerHTML = '<div class="wrap wide"><div class="eyebrow" style="color:#1E7A8C">Story Squad · Ages 8–10</div><h1 class="md">Choose a world.</h1><p class="sub">Vote, draw, film and style — how you play depends on where you land.</p><div class="grid junior-worlds">'+cards+'</div>' +
-    '<div class="card" style="max-width:680px;margin:18px auto 0;background:var(--ink);color:#fff"><div class="eyebrow gold">For studios</div><div class="junior-card-title">Every vote is audience intelligence.</div><p style="font-size:14px;line-height:1.6;opacity:.68;margin-top:8px">See which characters kids love, which twists they want, and which spinoff they would watch next — captured safely and in real time.</p></div></div>';
+    '<div class="card studio-intel"><div class="eyebrow" style="color:rgba(255,255,255,.84)">For studios</div><div class="junior-card-title">Every vote is intel.</div><p class="studio-intel-copy">Which characters kids love, which twists they want, which spinoff they\'d watch next — it\'s all signal, captured in real time, straight from the audience you\'re trying to reach.</p><div class="studio-intel-stats"><div class="studio-intel-stat"><strong>#1</strong><span>requested<br>spinoff character</span></div><div class="studio-intel-stat"><strong>340%</strong><span>engagement lift<br>on winning twist</span></div><div class="studio-intel-stat"><strong>12K</strong><span>kid votes this<br>month</span></div></div></div></div>';
 }
 function newdigs(){
   var existing = document.getElementById("peek");
