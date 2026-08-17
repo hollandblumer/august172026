@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>EWEy — The Participation Layer for All IP</title>
+<style>
+  :root{
+    --ink:#0B1220; --canvas:#FAFAF8; --card:#FFFFFF; --gold:#C6A02E; --goldsoft:#F4EAC9;
+    --muted:#7C8496; --line:rgba(11,18,32,.08); --dark:#060A14;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--canvas); color:var(--ink); overflow:hidden; overscroll-behavior:none;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  #stage{position:fixed; inset:0; overflow:hidden;}
+  .scene{position:absolute; inset:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;}
+  .scene::-webkit-scrollbar{width:0;}
+  .wrap{max-width:860px; margin:0 auto; padding:96px 24px 90px; text-align:center;}
+  .wrap.wide{max-width:900px;}
+
+  /* Type */
+  .eyebrow{font-size:12px; letter-spacing:.18em; text-transform:uppercase; font-weight:600; color:var(--muted); margin-bottom:16px;}
+  .eyebrow.gold{color:var(--gold);}
+  h1{font-size:clamp(30px,6vw,52px); font-weight:700; letter-spacing:-.03em; line-height:1.08;}
+  h1.md{font-size:clamp(28px,5.4vw,44px);}
+  .sub{font-size:clamp(15px,2.2vw,18px); line-height:1.55; color:var(--muted); max-width:560px; margin:16px auto 0;}
+
+  /* Buttons */
+  .btn{
+    font:inherit; font-size:16px; font-weight:600; letter-spacing:-.01em; padding:14px 32px;
+    border-radius:999px; border:1px solid transparent; background:var(--ink); color:#fff; cursor:pointer;
+    box-shadow:0 2px 10px rgba(11,18,32,.08); transition:all .25s cubic-bezier(.2,.8,.2,1);
+  }
+  .btn:hover{transform:scale(1.035); box-shadow:0 10px 30px rgba(11,18,32,.18);}
+  .btn:active{transform:scale(.98);}
+  .btn:focus-visible{outline:2px solid var(--gold); outline-offset:3px;}
+  .btn.white{background:#fff; color:var(--ink);}
+  .btn.gold{background:var(--gold); color:#fff;}
+  .btn.green{background:#2E7D4F; color:#fff;}
+  .btn.big{width:100%; padding:17px 32px; font-size:17px;}
+
+  /* Cards */
+  .card{
+    background:var(--card); border-radius:20px; padding:24px; border:1px solid var(--line);
+    box-shadow:0 2px 12px rgba(11,18,32,.05); transition:all .3s cubic-bezier(.2,.8,.2,1); text-align:left;
+  }
+  .card.click{cursor:pointer;}
+  .card.click:hover{transform:translateY(-4px) scale(1.01); box-shadow:0 18px 44px rgba(11,18,32,.12);}
+  .card.center{text-align:center;}
+
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+    letter-spacing:.06em; text-transform:uppercase; color:#8A6E14; background:var(--goldsoft);
+    border:1px solid rgba(198,160,46,.27); border-radius:999px; padding:6px 14px;
+  }
+  .chip .dot{width:6px; height:6px; border-radius:99px; background:var(--gold);}
+
+  /* Grids */
+  .grid{display:grid; gap:12px; margin:40px auto 0;}
+  .grid.cats{display:flex; flex-wrap:wrap; justify-content:center; max-width:820px;}
+  .grid.cats > .card{flex:1 1 140px; max-width:154px;}
+  .grid.worlds{grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; max-width:880px;}
+  .grid.powers{grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; max-width:760px;}
+  .grid.shows{grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); max-width:760px; margin-top:38px;}
+  .grid.creator{grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:18px; max-width:820px; margin-top:36px;}
+  .stack{display:grid; gap:14px; margin:36px auto 0; max-width:640px;}
+
+  /* Chrome */
+  #chrome{position:absolute; top:0; left:0; right:0; z-index:60; display:flex; align-items:center;
+    justify-content:space-between; padding:18px 22px; pointer-events:none; will-change:transform;}
+  #backbtn{pointer-events:auto; font:inherit; font-size:14px; font-weight:600; border:none; cursor:pointer;
+    background:rgba(11,18,32,.06); color:var(--ink); border-radius:999px; padding:8px 16px;
+    backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);}
+  #chrome.on-dark #backbtn{background:rgba(255,255,255,.12); color:#fff;}
+  #logo{font-weight:700; font-size:17px; letter-spacing:-.02em; color:var(--ink);}
+  #chrome.on-dark #logo{color:#fff;}
+  #logo b{color:var(--gold); font-weight:700;}
+  #spacer{width:74px;}
+  #dots{display:none!important; position:absolute; bottom:16px; left:50%; transform:translateX(-50%); gap:6px; z-index:40;}
+  #dots i{display:block; width:6px; height:6px; border-radius:99px; background:rgba(11,18,32,.14); transition:all .4s;}
+  #dots.on-dark i{background:rgba(255,255,255,.25);}
+  #dots i.now{width:20px; background:var(--gold);}
+
+  /* Animations */
+  @keyframes riseIn{from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:none;}}
+  @keyframes cinemaIn{from{opacity:0; transform:translateY(10px) scale(.985);} to{opacity:1; transform:none;}}
+  @keyframes tileIn{from{opacity:0; transform:scale(.6);} to{opacity:1; transform:scale(1);}}
+  @keyframes pulseGlow{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+  @keyframes threadGrow{from{transform:scaleY(0);} to{transform:scaleY(1);}}
+  .rise{animation:riseIn .7s cubic-bezier(.2,.8,.2,1) both;}
+  .cinema{animation:cinemaIn 1.1s cubic-bezier(.2,.8,.2,1) both;}
+  .tile{animation:tileIn .55s cubic-bezier(.2,.8,.2,1) both;}
+  .pulse{animation:pulseGlow 1.6s ease-in-out infinite;}
+  .thread{transform-origin:top; animation:threadGrow 1.6s cubic-bezier(.2,.8,.2,1) both .4s;}
+  @media (prefers-reduced-motion:reduce){.rise,.cinema,.tile,.pulse,.thread,.scenein,.livetoast,.fanvid .bar,.btn.gold,#ambient i{animation:none!important;} #scene{transition:none!important;}}
+
+  /* Scene transitions */
+  #scene{transition:opacity .24s ease, transform .24s ease, filter .24s ease;}
+  #scene.leaving{opacity:0; transform:scale(1.03); filter:blur(3px);}
+  .scenein{animation:sceneIn .5s cubic-bezier(.2,.8,.2,1);}
+  @keyframes sceneIn{from{opacity:0; transform:scale(.985);} to{opacity:1; transform:none;}}
+
+  /* Ambient life */
+  #ambient{position:absolute; inset:0; pointer-events:none; overflow:hidden;}
+  #ambient i{position:absolute; display:block; border-radius:50%;}
+  @keyframes drifta{0%,100%{transform:translate(0,0);} 50%{transform:translate(42px,-30px);}}
+  @keyframes driftb{0%,100%{transform:translate(0,0);} 50%{transform:translate(-48px,38px);}}
+
+  /* Live activity toasts */
+  .livetoast{position:absolute; top:62px; right:14px; z-index:30; background:rgba(255,255,255,.93); border:1px solid var(--line); box-shadow:0 6px 20px rgba(11,18,32,.1); border-radius:999px; padding:8px 14px; font-size:12.5px; font-weight:600; animation:toastLife 2.8s ease both; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);}
+  .livetoast.dark{background:rgba(255,255,255,.12); color:#fff; border-color:rgba(255,255,255,.2); box-shadow:none;}
+  @keyframes toastLife{0%{opacity:0; transform:translateY(-8px);} 12%{opacity:1; transform:none;} 80%{opacity:1;} 100%{opacity:0; transform:translateY(-6px);}}
+
+  /* Fan videos */
+  .fanvid{aspect-ratio:9/16; border-radius:14px; position:relative; overflow:hidden; box-shadow:0 8px 24px rgba(11,18,32,.15);}
+  .fanvid .play{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:24px; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.4);}
+  .fanvid .cap{position:absolute; left:8px; right:8px; bottom:11px; color:#fff; font-size:10.5px; font-weight:600; text-shadow:0 1px 6px rgba(0,0,0,.55); text-align:left;}
+  .fanvid .bar{position:absolute; left:0; bottom:0; height:3px; background:var(--gold); animation:vidbar 4s linear infinite;}
+  @keyframes vidbar{from{width:0;} to{width:100%;}}
+
+  /* Gold breathes */
+  .btn.gold{animation:goldbreathe 3s ease-in-out infinite;}
+  @keyframes goldbreathe{0%,100%{box-shadow:0 2px 10px rgba(198,160,46,.25);} 50%{box-shadow:0 6px 26px rgba(198,160,46,.45);}}
+
+  /* Dark scenes */
+  .darkscene{background:var(--dark); display:flex; align-items:center; justify-content:center; text-align:center; padding:28px;}
+  .worldscene{display:flex; align-items:center; justify-content:center; padding:24px;}
+  .worldscene.entryscene{align-items:flex-start; padding-top:88px; padding-bottom:56px;}
+
+  /* Mosaic */
+  #mosaicgrid{display:grid; grid-template-columns:repeat(13,1fr); gap:6px; width:125%;
+    transition:all 1.4s cubic-bezier(.2,.8,.2,1);}
+  #mosaicgrid.zoom{width:62%; max-width:700px; opacity:.4; filter:blur(1px);}
+  #mosaicgrid .mtile{aspect-ratio:1; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; font-size:clamp(10px,1.6vw,18px);}
+
+  /* Peek modal */
+  #peek{position:fixed; inset:0; background:rgba(6,10,20,.55); backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:50; padding:24px; padding-top:76px; overscroll-behavior:contain;}
+  #peek .panel{background:#fff; border-radius:24px; max-width:440px; width:100%; max-height:calc(100vh - 100px); overflow-y:auto; overscroll-behavior:contain;
+    box-shadow:0 30px 80px rgba(0,0,0,.3); text-align:left;}
+  #peek .panel div[style*="color:var(--muted)"][style*="font-weight:600"],
+  #peek .panel div[style*="color:#8A6E14"][style*="font-weight:600"],
+  #peek .panel div[style*="color:rgba(255,255,255,.78)"][style*="font-weight:600"]{
+    text-align:center;
+  }
+
+  .ai-row{display:flex; justify-content:space-between; align-items:center; padding:14px 0;
+    border-bottom:1px solid var(--line); opacity:.15; transition:opacity .5s;}
+  .ai-row.show{opacity:1;}
+  .ai-row:last-of-type{border-bottom:none;}
+  .ai-verdict{margin-top:18px; background:var(--canvas); border:1px solid var(--line); border-radius:14px;
+    padding:16px 18px; transition:all .6s; opacity:.25;}
+  .ai-verdict.show{background:var(--goldsoft); border-color:rgba(198,160,46,.33); opacity:1;}
+
+  .typechip{font-size:12.5px; font-weight:600; padding:6px 14px; border-radius:999px;
+    border:1px solid var(--line); color:var(--muted);}
+  .typechip.on{background:var(--ink); color:#fff; border-color:var(--ink);}
+
+  .catpill{color:#fff; font-size:14.5px; font-weight:600; padding:9px 18px; border-radius:999px;
+    border:1px solid rgba(255,255,255,.22);}
+</style>
+</head>
+<body>
+<div id="fallback" style="position:fixed; inset:0; background:#060A14; display:flex; align-items:center; justify-content:center; text-align:center; padding:32px; z-index:100;">
+  <div>
+    <div style="color:#fff; font-size:64px; font-weight:700; letter-spacing:-.04em;">EWE<span style="color:#C6A02E">y</span></div>
+    <div style="color:rgba(255,255,255,.6); font-size:14px; letter-spacing:.14em; text-transform:uppercase; margin-top:10px; font-weight:500;">The Participation Layer for All IP</div>
+    <div style="color:#fff; font-size:19px; font-weight:600; margin-top:44px; line-height:1.5; max-width:420px;">This is an interactive prototype.</div>
+    <div style="color:rgba(255,255,255,.65); font-size:15px; margin-top:12px; line-height:1.6; max-width:420px;">To experience it, open this file in your web browser — on a phone, tap the attachment and choose Safari or Chrome. On a computer, download it and double&#8209;click.</div>
+    <div style="color:rgba(255,255,255,.4); font-size:12.5px; margin-top:36px;">Takes about 3 minutes · Best with sound off, curiosity on</div>
+  </div>
+</div>
+<div id="stage">
+  <div id="ambient">
+    <i style="width:420px; height:420px; left:-8%; top:-10%; background:radial-gradient(circle, rgba(198,160,46,.15), transparent 70%); animation:drifta 19s ease-in-out infinite"></i>
+    <i style="width:360px; height:360px; right:-6%; top:22%; background:radial-gradient(circle, rgba(42,58,92,.11), transparent 70%); animation:driftb 23s ease-in-out infinite"></i>
+    <i style="width:300px; height:300px; left:12%; bottom:-8%; background:radial-gradient(circle, rgba(198,160,46,.12), transparent 70%); animation:driftb 17s ease-in-out infinite"></i>
+    <i style="width:260px; height:260px; right:18%; bottom:6%; background:radial-gradient(circle, rgba(42,58,92,.09), transparent 70%); animation:drifta 26s ease-in-out infinite"></i>
+  </div>
+  <div id="chrome" style="display:none">
+    <button id="backbtn" onclick="goBack()">&larr; Back</button>
+    <div id="logo">EWE<b>y</b></div>
+    <div id="spacer"></div>
+  </div>
+  <div id="scene" class="scene"></div>
+  <div id="dots" style="display:none"></div>
+</div>
+
+<script>
+// ————— Data —————
+var WORLDS = {
+  gw:{name:"Genius Weed", genre:"Comedy", grad:"linear-gradient(135deg,#123B2A 0%,#2E7D4F 55%,#7FB069 100%)"},
+  ul:{name:"Unleashed", genre:"Animated Comedy", grad:"linear-gradient(135deg,#7A2E12 0%,#D96C2C 55%,#F2B267 100%)"},
+  lf:{name:"The Last Future", genre:"Sci-Fi Mystery", grad:"linear-gradient(135deg,#0D1033 0%,#3A2E8C 55%,#7C6CD9 100%)"}
+};
+var CATEGORIES = [["📺","Television Series"],["🎬","Film"],["📚","Books"],["🎵","Music"],["🏈","Sports"],
+  ["🎙️","Podcasts"],["👗","Fashion"],["📰","Journalism"],["🎥","Documentaries"],["🎮","Games"],["🎭","Live Events"]];
+var EXPERIENCES = [
+  {title:"The Review That Gets You Banned", body:"Film the café review so unhinged you\u2019d be banned for life. Add the AI \u201Csecurity footage.\u201D The winning review premieres as the Official Fan Cold Open on the show\u2019s channels — and you star in it."},
+  {title:"The Chalkboard War", body:"Write the chalkboard message that starts a war between the regulars. The best becomes the Official Chalkboard of the Week — posted by the show, credited to you."},
+  {title:"Today\u2019s Special, But Legendary", body:"Invent the menu item — then use AI to film its full commercial. The winner premieres on the show\u2019s official channels as the featured fan spot."},
+  {title:"The Open Mic Discovery", body:"Write a stand-up set for a café regular who has never existed. If it kills, your character headlines the Official Fan Universe — celebrated by the creators, with you first in line to perform them in official content."},
+  {title:"The Prequel Nobody\u2019s Seen", body:"Write or film the story of a regular — before episode one, flashback with AI. Donick picks a winner to spotlight, published in the Official Fan Companion with your name, and featured in the Weekly Mash-Up."},
+  {title:"The Regular We\u2019ve Never Met", body:"Invent a customer from somewhere the show\u2019s never been. Write their first scene or film their entrance. If they land, they join the Official Fan Universe roster — celebrated by the creators, credited to you."},
+  {title:"The Mug That Breaks the Internet", body:"Design the mug so cursed or so perfect the café can\u2019t stop selling it. The winner becomes real merchandise with your name on the tag — and you get a cut of every sale."}
+];
+var CATPEEK = {
+  "Film":["Win a set visit — watch the sequel being filmed.","Remake the trailer shot-for-shot with your crew — the best one plays at the premiere.","Film the missing scene from another character's perspective."],
+  "Books":["Win a weekend where the book takes place — tour the real restaurants, shops, and beaches from the story.","Win a video call with the author — talk favorite characters and hear what's coming next.","Join the official fan extras compilation — credited, featured, and earning points every time it plays."],
+  "Music":["Win lunch with your favorite artist — top fan creation gets a seat at the table.","Create a chorus with your favorite artist.","Remake their song in a completely different genre."],
+  "Fashion":["Win a front-row seat at the next runway show — and meet the designer backstage.","Style a look inspired by your favorite world — selected looks join the official collection.","Design the limited-edition piece fans will wear next — the winning design is produced and credited."],
+  "Sports":["Win game-day tickets — call the winning play from the broadcast booth.","You're the sideline reporter — interview the MVP.","Design the limited-edition fan jersey."],
+  "Podcasts":["Win a call-in — join the hosts live on next week's episode.","Record the voicemail the hosts read on air.","Continue the conversation — respond to this week's episode with your best idea. The best make the official \u201CIdeas That Could Change the World\u201D compilation.","Win tickets to the live show — and a meet-and-greet with the hosts."],
+  "Journalism":["Who's the unsung hero in your hometown? Tell their story — editors verify, and the best run nationally with your byline.","Submit the photo behind the headline — published shots get credited and earn points.","Win a day in the newsroom — pitch your story to real editors."],
+  "Documentaries":["Tell us your theory — and why. The most compelling theories get featured in the official companion episode.","Ask the filmmakers — top-voted questions get answered on camera.","Who changed your life? Share your one-minute story — selected stories join the companion film, credited.","Win a seat at the premiere — and meet the filmmakers."],
+  "Games":["Win early access — be one of the first players inside the next expansion.","Design a side quest — the winning quest ships in the next update, with your name in the credits.","Hide the easter egg every player will hunt for."],
+  "Live Events":["Win front-row seats and backstage passes for the next stop on the tour.","Vote the encore setlist into existence — then watch it happen live.","Record your section's fan chant — the best one plays in the arena.","Design this tour's limited merch drop — the winning design sells at the venue, credited."]
+};
+var FILM_CATEGORIES = {
+  "Participate":{
+    items:["Shoot the scene that happened off camera — made with AI. The winning headlines the Official Fan Showcase, presented by the filmmakers.","Cut the one-minute sequel pitch. The best trailer screens at the official fan premiere event.","Cast yourself. Your audition is a brand-new character. The winner gets a background-extra slot on a future shoot — credited."]
+  },
+  "Join the Official Film League":{
+    items:["Weekly Challenges","XP","Badges","Leaderboards","Story World MVP"]
+  },
+  "Possible Official Experiences & Recognition":{
+    label:"⭐ Signature Experience",
+    title:"Showcased by the Filmmakers. You On Set as a Credited Extra.",
+    note:"Note: Film differs from other worlds — its experiences are built around tangible released titles.",
+    items:["Your trailer screens at the official fan premiere event.","Background-extra slot on credit.","Premieres · filmmaker Q&As · VIP screenings."]
+  }
+};
+var MOSAIC_ICONS = ["🎭","🎨","✍️","📷","🎬","🎤","😂","🎵","🐶","☕","🛸","📝"];
+// Development shortcut: keep the opening "Enter EWEy" world sequence out of the route.
+var SCENES = ["worldtype","storyworld","entry","experience","create","mosaic","ai","continues","win","local","beyond","creator","end"];
+var DARK = {cold:1, mosaic:1, end:1, entry:1};
+
+// ————— State —————
+var S = {i:0, prompt:EXPERIENCES[0], timers:[]};
+
+// Chrome (the EWEy header bar) scrolls away with the page instead of staying pinned.
+(function(){
+  var sceneEl = document.getElementById("scene");
+  var chromeEl = document.getElementById("chrome");
+  sceneEl.addEventListener("scroll", function(){
+    chromeEl.style.transform = "translateY(-" + sceneEl.scrollTop + "px)";
+  }, {passive:true});
+})();
+
+function clearTimers(){ S.timers.forEach(clearTimeout); S.timers = []; }
+function later(fn, ms){ S.timers.push(setTimeout(fn, ms)); }
+function go(i){
+  clearTimers();
+  var t = Math.max(0, Math.min(i, SCENES.length-1));
+  var el = document.getElementById("scene");
+  if (t === S.i || !el){ S.i = t; render(); return; }
+  S.i = t;
+  el.classList.add("leaving");
+  S.timers.push(setTimeout(function(){ el.classList.remove("leaving"); render(); }, 230));
+}
+var LIVE = ["🔔 Donick just announced next week\u2019s challenge","🎭 Maya D. just earned 250 points","🎟️ Priya just won premiere tickets","⭐ New featured pick in Unleashed","🎥 17,841,698 fan videos posted today","😂 Sabatini\u2019s cousin is trending again","❤️ Jayden\u2019s café review just hit 10K","💰 Weekly cash challenge is live","🐶 A golden retriever just went viral","🏆 Weekly winners announced in 2 hours","🛍️ A fan mug design just became official merch","✨ Sofia\u2019s design advanced to review","📍 Pop-up café announced in Austin"];
+function startLive(el, n, dark){
+  n = n || 0;
+  later(function(){
+    var t = document.createElement("div");
+    t.className = "livetoast" + (dark ? " dark" : "");
+    t.textContent = LIVE[n % LIVE.length];
+    el.appendChild(t);
+    later(function(){ if (t.parentNode) t.remove(); }, 2900);
+    startLive(el, n + 1, dark);
+  }, n === 0 ? 700 : 3100);
+}
+function next(){ go(S.i+1); }
+function goBack(){ go(S.i-1); }
+function pickPrompt(idx){ S.prompt = EXPERIENCES[idx]; next(); }
+function restart(){ S.prompt = EXPERIENCES[0]; go(0); }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+// ————— Chrome —————
+function renderChrome(){
+  var id = SCENES[S.i];
+  var chrome = document.getElementById("chrome");
+  var dots = document.getElementById("dots");
+  if (id === "cold"){ chrome.style.display = "none"; dots.style.display = "none"; return; }
+  chrome.style.display = "flex";
+  chrome.className = DARK[id] ? "on-dark" : "";
+  document.getElementById("backbtn").style.visibility = id === "worldtype" ? "hidden" : "visible";
+  if (id === "end"){ dots.style.display = "none"; }
+  else {
+    dots.style.display = "flex";
+    dots.className = DARK[id] ? "on-dark" : "";
+    var h = "";
+    for (var k = 1; k < SCENES.length-1; k++) h += '<i class="' + (k === S.i ? "now" : "") + '"></i>';
+    dots.innerHTML = h;
+  }
+}
+
+// ————— Scene templates —————
+function scCold(){
+  var el = document.getElementById("scene");
+  el.className = "scene darkscene";
+  var lines = ["What if you could officially participate around your favorite story world?","Not rewrite it.","Create, perform, and play alongside it."];
+  function showLine(n){
+    if (n < lines.length){
+      el.innerHTML = '<div class="cinema" style="color:#fff; font-size:clamp(26px,5vw,44px); font-weight:600; letter-spacing:-.02em; max-width:640px; line-height:1.25">' + lines[n] + '</div>';
+      later(function(){ showLine(n+1); }, n === 0 ? 3500 : 2600);
+    } else {
+      el.innerHTML =
+        '<div class="cinema">' +
+          '<div style="color:#fff; font-size:clamp(56px,10vw,96px); font-weight:700; letter-spacing:-.04em">EWE<span style="color:var(--gold)">y</span></div>' +
+          '<div style="color:rgba(255,255,255,.55); font-size:16px; letter-spacing:.14em; text-transform:uppercase; margin-top:10px; font-weight:500">Step inside the worlds you love</div>' +
+          '<div style="display:inline-flex; align-items:center; gap:8px; margin-top:28px; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16); border-radius:999px; padding:8px 16px; font-size:13px; font-weight:600; color:#fff"><span class="pulse" style="width:8px; height:8px; border-radius:99px; background:#E5484D; display:inline-block"></span>1,248,943 fans creating right now</div>' +
+          '<div style="margin-top:30px"><button class="btn white" onclick="next()">Enter EWEy</button></div>' +
+        '</div>';
+      startLive(el, 0, true);
+    }
+  }
+  showLine(0);
+}
+
+function scWorldType(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var tiles = CATEGORIES.map(function(c, i){
+    var act = c[1] === "Television Series" ? "next()" : "openCatPeek('" + c[1] + "')";
+    var featured = c[1] === "Television Series" ? '<div style="font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--gold); margin-top:6px">Featured demo</div>' : "";
+    return '<div class="card click center rise" style="padding:22px 12px; animation-delay:' + (i*45) + 'ms" onclick="' + act + '">' +
+      '<div style="font-size:30px">' + c[0] + '</div>' +
+      '<div style="font-weight:600; font-size:15px; margin-top:8px">' + c[1] + '</div>' + featured + '</div>';
+  }).join("");
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow">One platform · Every story world</div>' +
+    '<h1>Choose a world.</h1>' +
+    '<p class="sub">Every kind of story can open its doors to its audience — officially.</p>' +
+    '<div style="margin-top:14px"><span class="chip"><span class="dot"></span>🎬 Act it out · Film it · Make it your own</span></div>' +
+    '<div style="margin-top:10px; font-size:13.5px; color:var(--muted)">Most EWEy experiences are fun one-minute videos you create right on your phone.</div>' +
+    '<div class="rise" style="margin-top:18px; background:#12151c; border-radius:16px; padding:20px; color:#fff">' +
+      '<div style="font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold)">⭐ Every Friday</div>' +
+      '<div style="font-weight:700; font-size:19px; margin-top:8px; letter-spacing:-.02em">The Official Weekly Mash-Up.</div>' +
+      '<div style="font-size:13.5px; line-height:1.5; color:rgba(255,255,255,.7); margin-top:8px">The best fan creations from every world, cut into one official show. Make a one-minute video. Get in the show.</div>' +
+      '<div style="display:flex; gap:10px; margin-top:14px">' +
+        '<div style="width:40px; height:40px; border-radius:10px; background:rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; font-size:18px">📺</div>' +
+        '<div style="width:40px; height:40px; border-radius:10px; background:rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; font-size:18px">🎬</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="grid cats">' + tiles + '</div>' +
+  '</div>';
+  startLive(el);
+}
+
+function openCatPeek(name){
+  if (name === "Film") { openFilmCategories(); return; }
+  if (name === "Sports") { openSportsCategories(); return; }
+  if (name === "Music") { openMusicCategories(); return; }
+  if (name === "Podcasts") { openPodcastCategories(); return; }
+  if (name === "Books") { openBookCategories(); return; }
+  if (name === "Documentaries") { openDocumentaryCategories(); return; }
+  if (name === "Journalism") { openJournalismCategories(); return; }
+  if (name === "Fashion") { openFashionCategories(); return; }
+  if (name === "Games") { openGameCategories(); return; }
+  if (name === "Live Events") { openLiveEventCategories(); return; }
+  var items = CATPEEK[name].map(function(p){
+    return '<div style="font-size:14px; line-height:1.5; background:var(--canvas); border-radius:12px; padding:12px 14px; border:1px solid var(--line)">' + p + '</div>';
+  }).join("");
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0B1220,#2A3A5C)"></div>' +
+    '<div style="padding:28px">' +
+      '<span class="chip"><span class="dot"></span>Quick preview</span>' +
+      '<div style="font-weight:700; font-size:20px; margin-top:12px">' + name + '</div>' +
+      '<div style="font-size:13px; color:var(--muted); margin-top:2px">Example experiences for this genre. Every world gets prompts native to its own audience.</div>' +
+      '<div style="margin-top:16px; display:grid; gap:10px">' + items + '</div>' +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:12px 14px; font-size:13px; line-height:1.5; color:#8A6E14; font-weight:600">For the complete walkthrough, choose <span style="text-decoration:underline">Television Series</span> — our featured demo.</div>' +
+      '<div style="margin-top:14px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openLiveEventCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#7A2E12,#D96C2C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">LIVE EVENTS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openLiveEventSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openLiveEventSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Live Events League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openLiveEventSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openLiveEventSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Live Events League" : "Possible Official Experiences & Recognition";
+  var participate = ["Write the fan-night scene — a five-minute bonus performance. The winner is performed live at the Official Fan Night, playwright credited in the program.","Vote the encore setlist into existence — then watch it happen live.","Record your section's fan chant — the best one plays in the arena.","Design this tour's limited merch drop — the winning design sells at the venue, credited.","Perform the pre-show. Submit your one-minute act. The winner performs it live in the lobby before curtain."];
+  var league = ["Complete weekly event challenges, check in at events, earn XP and badges, climb the leaderboards, and compete to become Fan MVP."];
+  var recognition = ["Your scene, chant, your design — part of the official night, alongside the show.","Your merch design sold at the venue.","Front-row seats and backstage passes for the next stop of the tour."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ? '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div><div style="font-weight:700; font-size:16px; margin-top:6px">Performed at the Official Fan Night. Credited in the Program.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: The season\'s Fan MVP earns a credit in the printed program.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#7A2E12,#D96C2C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">LIVE EVENTS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      (items ? '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' : '') +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openLiveEventCategories()">Back to Live Events</button></div>' +
+    '</div></div>';
+}
+
+function openGameCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0B1220,#2A3A5C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">GAMES</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGameSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGameSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Game League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGameSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openGameSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Game League" : "Possible Official Experiences & Recognition";
+  var participate = ["Design a side quest — the winning quest ships in the next update, with your name in the credits.","Hide the easter egg every player will hunt for."];
+  var recognition = ["Win early access — be one of the first players inside the next expansion."];
+  var list = section === "participate" ? participate : section === "recognition" ? recognition : [];
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0B1220,#2A3A5C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">GAMES</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      (items ? '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' : '') +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openGameCategories()">Back to Games</button></div>' +
+    '</div></div>';
+}
+
+function openFashionCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#5C1B4A,#B13E8E)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">FASHION</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openFashionSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openFashionSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Fashion League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openFashionSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openFashionSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Fashion League" : "Possible Official Experiences & Recognition";
+  var participate = ["Design the piece — one look for the house's world, sketched, AI-rendered, or sewn. The winner is produced in the next capsule, designer credited.","Style the story. Build the runway look for a character from any EWEy world — crossover content featured platform-wide.","Shoot the campaign — a one-minute film for an existing piece. The winner runs on the brand's official channels."];
+  var league = ["Weekly Challenges · XP · Badges · Leaderboards"];
+  var recognition = ["Winning design worn on stage or at a premiere.","Produced in the official capsule, sold with your name.","Front-row invitations: atelier visits · Official Style Showcase · creator-curated lookbooks."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ? '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div><div style="font-weight:700; font-size:16px; margin-top:6px">Your Design, Produced and Worn. Your Name On It.</div><div style="font-size:14px; line-height:1.5; color:var(--muted); margin-top:6px">Worn by an artist on stage, at a premiere — then sold with your credit.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s top designer gets a piece produced and sold.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#5C1B4A,#B13E8E)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">FASHION</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openFashionCategories()">Back to Fashion</button></div>' +
+    '</div></div>';
+}
+
+function openJournalismCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#263238,#607D8B)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">JOURNALISM</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openJournalismSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openJournalismSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Journalism League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openJournalismSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openJournalismSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Journalism League" : "Possible Official Experiences & Recognition";
+  var participate = ["Report the local angle — the national story from your zip code, one minute, your streets. The best reports are published on the outlet's official community channels, bylined.","Interview the overlooked — the voice coverage missed. The winner runs as an official community sidebar, credited.","Win the archive hunt. Surface the photo, clipping, or document that deepens the story. Contributors are credited in the official piece."];
+  var league = ["Verified Participation · XP · Badges · Leaderboards"];
+  var recognition = ["Your report published with your byline on the community channels.","Your interview runs as an official sidebar.","Newsroom visits · editor Q&As · Featured Community Story of the Week."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Published. Bylined. Official.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">Not writing the news — contributing the piece only you could find.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s top contributor earns a community byline.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#263238,#607D8B)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">JOURNALISM</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openJournalismCategories()">Back to Journalism</button></div>' +
+    '</div></div>';
+}
+
+function openDocumentaryCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0D1033,#3A2E8C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">DOCUMENTARIES</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openDocumentarySection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openDocumentarySection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Documentary League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openDocumentarySection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openDocumentarySection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Documentary League" : "Possible Official Experiences & Recognition";
+  var participate = ["Film the interview the documentary missed — someone in your town who lived it. The best interviews are cut into the official Impact Campaign, credited as field producer.","Report the sequel scene. What happened after the cameras left? Tell it in one minute for the Community Story Showcase.","Surface the evidence — the photo, letter, or artifact that deepens the record. Contributors are named in the official archive."];
+  var league = ["Community Contributions · XP · Badges · Leaderboards"];
+  var recognition = ["Cut into the official outreach campaign, credited.","Meet the filmmaker · VIP screenings · premieres.","Exclusive discussions · Community Story Showcase."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Your Interview in the Official Impact Campaign. Field-Producer Credit.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">Not changing the documentary — extending its reach with your name attached.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s top contributor earns a field-producer credit on the Impact Campaign.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0D1033,#3A2E8C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">DOCUMENTARIES</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openDocumentaryCategories()">Back to Documentaries</button></div>' +
+    '</div></div>';
+}
+
+function openBookCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#3A2E10,#8A6E14)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">BOOKS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openBookSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openBookSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Book League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openBookSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openBookSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Book League" : "Possible Official Experiences & Recognition";
+  var participate = ["Write the prequel chapter — a beloved character before page one. The author reviews the winner and it's published in the Official Fan Companion with your name.","Invent the character from elsewhere — someone from a place the book never visits. The best one is spotlighted by the author and featured in the Official Reader Gallery.","Film the scene the book only describes — produce it with AI. The winner premieres at the author's live event and on the official channels.","Write the lost letter one character never sent to another. The author picks a favorite to read and celebrate.","Design the cover that should have been — with AI. The winner becomes the official reading-guide cover — designer credited on the flap."];
+  var league = ["Reading Milestones & Book Clubs","XP · Badges · Leaderboards"];
+  var recognition = ["The author personally reads your favorite passage.","Your artwork becomes the official reading-guide cover.","Exclusive virtual book club with the author.","Signed books · VIP literary events · Official Reader Gallery."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Published in the Official Fan Companion. Your Name in Print.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">Alongside the book — never inside it. Read aloud by the author, spotlighted on the official channels.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Companion Tier: the season\'s top contributor is published in the Official Fan Companion — name in print.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#3A2E10,#8A6E14)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">BOOKS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openBookCategories()">Back to Books</button></div>' +
+    '</div></div>';
+}
+
+function openPodcastCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#1B3A5C,#3E7CB1)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">PODCASTS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openPodcastSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openPodcastSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Podcast League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openPodcastSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openPodcastSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Podcast League" : "Possible Official Experiences & Recognition";
+  var participate = ["Produce the listener cold open. The winner airs as the show's featured listener opener — credited by name.","Pitch the episode they haven't made in one minute. The best pitch is celebrated on air, with you invited on as a guest.","Bring the listener investigation — evidence, a lead, a local story. The best contribution becomes a featured listener segment, credited as a contributor."];
+  var league = ["Weekly Challenges · XP · Badges · Leaderboards"];
+  var recognition = ["Your cold open airs as the featured listener opener.","Guest spot on the episode you pitched.","Live tapings · host Q&As · Podcast Community Showcase."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Your Voice on the Show. Your Name in the Credits.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">Featured listener segments, produced by you, celebrated on air.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s top contributor lands an on-air credit.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#1B3A5C,#3E7CB1)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">PODCASTS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openPodcastCategories()">Back to Podcasts</button></div>' +
+    '</div></div>';
+}
+
+function openMusicCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#5C1B4A,#B13E8E)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">MUSIC</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openMusicSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openMusicSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Music League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openMusicSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openMusicSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Music League" : "Possible Official Experiences & Recognition";
+  var participate = ["Write the verse that's missing — the third verse the song never had. The artist spotlights the winner on their official channels and celebrates it at a fan event, credited to you.","Produce the fan-made video with AI. The winner is featured as an official fan visualizer on the artist's channels.","Open the show. Submit your one-minute cover or original. The winner's track plays in the venue as doors open — announced by name."];
+  var league = ["Weekly Challenges · XP · Badges · Leaderboards"];
+  var recognition = ["Your video featured as an official fan visualizer.","Your track plays the venue as doors open, announced by name.","Soundcheck access · meet-and-greets · signed vinyl."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Featured by the Artist. Played in the Venue. Credited.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">Made at home — celebrated on the official stage and channels.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s top fan gets a name-check on stage and a feature on the artist\'s official channels.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#5C1B4A,#B13E8E)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">MUSIC</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openMusicCategories()">Back to Music</button></div>' +
+    '</div></div>';
+}
+
+function openSportsCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#123B2A,#2E7D4F)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">SPORTS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openSportsSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openSportsSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Fan League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openSportsSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openSportsSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Fan League" : "Possible Official Experiences & Recognition";
+  var participate = ["Call the game. Re-commentate the legendary play — the winning call is featured on the team's official channels.","Design the alternate jersey. The winner becomes a real drop, with the designer's name on the tag.","Film the superfan documentary — your one-minute fan story. The best ones air in-stadium on the jumbotron, with you in the building."];
+  var league = ["Weekly Challenges · XP · Badges · Leaderboards · Fan MVP"];
+  var recognition = ["Featured on the jumbotron, in the building.","Meet your favorite athlete · sideline passes · locker room tour.","VIP tickets · signed jersey · weekly fan highlight compilations."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Your Call on the Official Channels. Your Design on Real Jerseys.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">Your video appears on the team\'s official channels — credited.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s Fan MVP gets a jumbotron feature and an on-field experience.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#123B2A,#2E7D4F)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">SPORTS</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openSportsCategories()">Back to Sports</button></div>' +
+    '</div></div>';
+}
+
+function openFilmCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0B1220,#2A3A5C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">FILM</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">Choose a category.</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openFilmSection(\'Participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openFilmSection(\'Join the Official Film League\')"><div style="font-weight:700; font-size:16px">Join the Official Film League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openFilmSection(\'Possible Official Experiences &amp; Recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:var(--muted); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openFilmSection(name){
+  var section = FILM_CATEGORIES[name];
+  var items = section.items.map(function(p){
+    return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>';
+  }).join("");
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:linear-gradient(135deg,#0B1220,#2A3A5C)"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">FILM</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + name + '</div>' +
+      (section.label ? '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">' + section.label + '</div>' : '') +
+      (section.title ? '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">' + section.title + '</div>' : '') +
+      (section.note ? '<div style="font-size:13px; line-height:1.55; color:var(--muted); margin-top:10px">' + section.note + '</div>' : '') +
+      '<ul style="margin:16px 0 0; padding-left:20px">' + items + '</ul>' +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openFilmCategories()">Back to Film</button></div>' +
+    '</div></div>';
+}
+
+function scStoryWorld(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var ids = ["gw","ul","lf"];
+  var cards = ids.map(function(id, i){
+    var w = WORLDS[id];
+    var badge = id === "gw" ? '<div style="position:absolute; top:12px; left:12px"><span class="chip"><span class="dot"></span>Featured demo</span></div>' : "";
+    var cta = '<div style="font-size:13px; font-weight:600; margin-top:12px; color:var(--muted)">Quick look &rarr;</div>';
+    var act = id === "gw" ? "openGeniusWeedCategories()" : id === "ul" ? "openUnleashedCategories()" : "openLastFutureCategories()";
+    return '<div class="card click rise" style="padding:0; overflow:hidden; animation-delay:' + (i*90) + 'ms" onclick="' + act + '">' +
+      '<div style="height:130px; background:' + w.grad + '; position:relative">' + badge + '</div>' +
+      '<div style="padding:20px">' +
+        '<div style="font-weight:700; font-size:19px; letter-spacing:-.02em">' + w.name + '</div>' +
+        '<div style="font-size:13px; color:var(--muted); margin-top:4px">' + w.genre + '</div>' + cta +
+      '</div></div>';
+  }).join("");
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow">Television Series</div>' +
+    '<h1>Choose a story world.</h1>' +
+    '<p class="sub">Three original worlds, built for participation from day one.</p>' +
+    '<p class="sub" style="font-size:14px; max-width:650px; margin-top:10px">These are just three examples of the thousands of past, present, and potential future studio television series that could become participation worlds on EWEy.</p>' +
+    '<div class="grid worlds">' + cards + '</div>' +
+  '</div>';
+  startLive(el);
+}
+
+function openGeniusWeedCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" style="background:' + WORLDS.gw.grad + '; color:#fff" onclick="event.stopPropagation()">' +
+    '<div style="padding:30px 28px">' +
+      '<span class="chip"><span class="dot"></span>Official participation world</span>' +
+      '<div style="font-size:clamp(38px,7vw,54px); font-weight:700; letter-spacing:-.035em; margin-top:18px">Genius Weed</div>' +
+      '<div style="font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.72); margin-top:4px">Comedy · Season One</div>' +
+      '<div style="background:rgba(255,255,255,.97); color:var(--ink); border-radius:16px; padding:18px; margin-top:22px; box-shadow:0 16px 36px rgba(0,0,0,.18)">' +
+        '<div style="font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gold)">Creative Team</div>' +
+        '<div style="font-size:16px; font-weight:700; margin-top:8px">Created by Cheryl Fudge</div>' +
+        '<div style="height:1px; background:var(--line); margin:13px 0"></div>' +
+        '<div style="font-size:14px; font-weight:700">Showrunner: Donick Cary</div>' +
+        '<div style="font-size:12.5px; line-height:1.5; color:var(--muted); margin-top:4px">Writer/Producer — The Simpsons, Parks and Recreation, Silicon Valley, and Late Show with David Letterman.</div>' +
+        '<div style="height:1px; background:var(--line); margin:13px 0"></div>' +
+        '<div style="font-size:14px; font-weight:700">Producer: Mike Rosenstein</div>' +
+        '<div style="font-size:12.5px; line-height:1.5; color:var(--muted); margin-top:4px">Founder, Sunset Rose Pictures. Former Head of Digital at Red Hour Films (Ben Stiller).</div>' +
+      '</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="document.getElementById(\'peek\').remove(); go(SCENES.indexOf(\'experience\'))"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGeniusWeedSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Genius Weed League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGeniusWeedSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:rgba(255,255,255,.78); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn white" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to story worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openUnleashedCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" style="background:' + WORLDS.ul.grad + '; color:#fff" onclick="event.stopPropagation()">' +
+    '<div style="padding:30px 28px">' +
+      '<span class="chip"><span class="dot"></span>Official participation world</span>' +
+      '<div style="font-size:clamp(38px,7vw,54px); font-weight:700; letter-spacing:-.035em; margin-top:18px">Unleashed</div>' +
+      '<div style="font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.72); margin-top:4px">Animated Comedy</div>' +
+      '<div style="background:rgba(255,255,255,.97); color:var(--ink); border-radius:16px; padding:18px; margin-top:22px; box-shadow:0 16px 36px rgba(0,0,0,.18)">' +
+        '<div style="font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gold)">Creative Team</div>' +
+        '<div style="font-size:16px; font-weight:700; margin-top:8px">Created by Cheryl Fudge</div>' +
+        '<div style="height:1px; background:var(--line); margin:13px 0"></div>' +
+        '<div style="font-size:14px; font-weight:700">Showrunner: Donick Cary</div>' +
+        '<div style="font-size:12.5px; line-height:1.5; color:var(--muted); margin-top:4px">Writer/Producer — The Simpsons, Parks and Recreation, Silicon Valley, and Late Show with David Letterman.</div>' +
+        '<div style="height:1px; background:var(--line); margin:13px 0"></div>' +
+        '<div style="font-size:14px; font-weight:700">Producer: Mike Rosenstein</div>' +
+        '<div style="font-size:12.5px; line-height:1.5; color:var(--muted); margin-top:4px">Founder, Sunset Rose Pictures. Former Head of Digital at Red Hour Films (Ben Stiller). Producer of Genius Weed and Unleashed.</div>' +
+      '</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openUnleashedSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openUnleashedSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the National Mutt League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openUnleashedSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:rgba(255,255,255,.78); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn white" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to story worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openUnleashedSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the National Mutt League" : "Possible Official Experiences & Recognition";
+  var participate = ["Draft your dog. Produce their official National Mutt League draft-day film — highlight reel, stats, slow-mo, AI commentary. The best draft films headline the Official Fan League broadcast on the show's channels.","Film the post-game meltdown — your dog's interview, with an AI voice. The best interviews are animated by the show's artists as Official Fan League shorts.","Invent the rivalry — your dog's league rival from a team that doesn't exist yet. The best rivalry becomes a running Official Fan League storyline on the show's channels.","Break the scandal — treat-gate, doping-by-bacon, the referee cat. Film the “sports news” report. The winner runs as the Official Fan League news segment.","Design the franchise — an expansion team: name, logo, jerseys, stadium. The winning franchise joins the Official Fan League and the merch becomes real with your name on the tag."];
+  var league = ["Weekly Challenges","XP","Badges","Leaderboards","Dog MVP"];
+  var recognition = ["Featured Dog of the Week.","Meet the creators.","Signed merchandise.","VIP fan events.","Featured in the Official Fan Showcase."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:16px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Your Dog Becomes “Dog of the Week” Inside the National Mutt League.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:10px">Your dog gets an official player card, social media feature, and appears in the community spotlight.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:' + WORLDS.ul.grad + '"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">UNLEASHED</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openUnleashedCategories()">Back to Unleashed</button></div>' +
+    '</div></div>';
+}
+
+function openLastFutureCategories(){
+  var existing = document.getElementById("peek");
+  if (existing) existing.remove();
+  var m = document.createElement("div");
+  m.id = "peek"; m.className = "cinema";
+  m.onclick = function(){ m.remove(); };
+  m.innerHTML = '<div class="panel" style="background:' + WORLDS.lf.grad + '; color:#fff" onclick="event.stopPropagation()">' +
+    '<div style="padding:30px 28px">' +
+      '<span class="chip"><span class="dot"></span>Official participation world</span>' +
+      '<div style="font-size:clamp(32px,7vw,48px); font-weight:700; letter-spacing:-.035em; margin-top:18px">The Last Future</div>' +
+      '<div style="font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:rgba(255,255,255,.72); margin-top:4px">Sci-Fi Mystery</div>' +
+      '<div style="background:rgba(255,255,255,.97); color:var(--ink); border-radius:16px; padding:18px; margin-top:22px; box-shadow:0 16px 36px rgba(0,0,0,.18)">' +
+        '<div style="font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gold)">Creative Team</div>' +
+        '<div style="font-size:16px; font-weight:700; margin-top:10px">Co-created by Cheryl Fudge and Lynda Levy</div>' +
+      '</div>' +
+      '<div style="margin-top:18px; display:grid; gap:12px">' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openLastFutureSection(\'participate\')"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openLastFutureSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Decoder League</div></button>' +
+        '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openLastFutureSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+      '</div>' +
+      '<div style="margin-top:18px; font-size:13px; line-height:1.5; color:rgba(255,255,255,.78); font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn white" style="width:100%" onclick="document.getElementById(\'peek\').remove()">Back to story worlds</button></div>' +
+    '</div></div>';
+  document.body.appendChild(m);
+}
+
+function openLastFutureSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Decoder League" : "Possible Official Experiences & Recognition";
+  var participate = ["Recover the Roswell tape. It\u2019s 1947 and you\u2019ve found footage that was never supposed to exist. Build the 60-second tape with AI. The best transmission is featured in the official marketing campaign — credited to you.","Prove there was a fifth student. Four Stanford students — build the fifth\u2019s identity, evidence trail, and one surviving video. The winner headlines the Official Fan Mythology archive, celebrated by the creators.","Design a parallel civilization — culture, tech, language, and a one-minute AI transmission from it. The winning civilization enters the Official Fan Universe atlas, named for its creator.","Decode the signal. A real encrypted clue drops every month. The first to crack it is immortalized in the Official Decoder Registry — celebrated by the creators."];
+  var league = ["Weekly Challenges · XP · Badges · Leaderboards"];
+  var recognition = ["Credit on official companion and marketing content.","Cash for officially used material.","Featured in the Weekly Official Mash-Up."];
+  var list = section === "participate" ? participate : section === "league" ? league : recognition;
+  var items = list.map(function(p){ return '<li style="font-size:14px; line-height:1.5; margin-top:8px">' + p + '</li>'; }).join("");
+  var signature = section === "recognition" ?
+    '<div style="color:var(--gold); font-size:13px; font-weight:700; margin-top:14px">⭐ Signature Experience</div>' +
+    '<div style="font-weight:700; font-size:18px; line-height:1.35; margin-top:10px">Immortalized in the Official Fan Mythology.</div>' +
+    '<div style="font-size:14px; line-height:1.55; color:var(--muted); margin-top:8px">The tape, the fifth student, the civilization — celebrated in the official fan universe with your name, alongside the story.</div>' : "";
+  var spotlight = section === "league" ? '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Spotlight Tier: the season\'s top decoder earns a permanent credit in the Official Decoder Registry.</div>' : "";
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:' + WORLDS.lf.grad + '"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">THE LAST FUTURE</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      signature +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      spotlight +
+      '<div style="margin-top:20px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:12px; padding:14px; font-size:14px; line-height:1.55; color:#8A6E14; font-weight:600">Official participation alongside the canon. Never rewriting it. Always celebrating it.</div>' +
+      '<div style="margin-top:14px"><button class="btn" style="width:100%" onclick="openLastFutureCategories()">Back to The Last Future</button></div>' +
+    '</div></div>';
+}
+
+
+function scEntry(){
+  var el = document.getElementById("scene");
+  el.className = "scene worldscene entryscene";
+  el.style.background = WORLDS.gw.grad;
+  el.innerHTML = '<div class="cinema" style="text-align:center; max-width:620px">' +
+    '<span class="chip"><span class="dot"></span>Official participation world</span>' +
+    '<div style="color:#fff; font-size:clamp(44px,8vw,72px); font-weight:700; letter-spacing:-.035em; margin-top:22px">Genius Weed</div>' +
+    '<div style="color:rgba(255,255,255,.75); font-size:15px; letter-spacing:.12em; text-transform:uppercase; margin-top:6px; font-weight:500">Comedy · Season One</div>' +
+    '<div class="rise" style="background:rgba(255,255,255,.96); border-radius:20px; padding:24px 26px; margin-top:40px; text-align:left; box-shadow:0 24px 60px rgba(0,0,0,.25); animation-delay:400ms">' +
+      '<div style="display:flex; align-items:center; gap:12px">' +
+        '<div style="width:44px; height:44px; border-radius:99px; background:' + WORLDS.gw.grad + '; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:16px">DC</div>' +
+        '<div><div style="font-weight:700; font-size:15px">Donick Cary</div>' +
+        '<div style="font-size:12.5px; color:var(--muted)">Showrunner · The Simpsons, Silicon Valley, Parks &amp; Rec</div></div>' +
+      '</div>' +
+      '<p style="font-size:16px; line-height:1.6; margin-top:16px">\u201CWelcome to Genius Weed. The café doors are open — come play inside our world, show us your superpower, and win. We can\u2019t wait to see what you make.\u201D</p>' +
+    '</div>' +
+    '<div class="rise" style="background:rgba(255,255,255,.96); border-radius:20px; padding:22px 24px; margin-top:18px; text-align:left; box-shadow:0 20px 50px rgba(0,0,0,.2); animation-delay:520ms">' +
+      '<div style="font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gold)">Creative Team</div>' +
+      '<div style="font-size:18px; font-weight:700; margin-top:8px">Created by Cheryl Fudge</div>' +
+      '<div style="height:1px; background:var(--line); margin:16px 0"></div>' +
+      '<div style="font-size:15px; font-weight:700">Showrunner: Donick Cary</div>' +
+      '<div style="font-size:13px; line-height:1.5; color:var(--muted); margin-top:4px">Writer/Producer — The Simpsons, Parks and Recreation, Silicon Valley, and Late Show with David Letterman.</div>' +
+      '<div style="height:1px; background:var(--line); margin:16px 0"></div>' +
+      '<div style="font-size:15px; font-weight:700">Producer: Mike Rosenstein</div>' +
+      '<div style="font-size:13px; line-height:1.5; color:var(--muted); margin-top:4px">Founder, Sunset Rose Pictures. Former Head of Digital at Red Hour Films (Ben Stiller). Producer of Genius Weed and Unleashed.</div>' +
+    '</div>' +
+    '<div class="rise" style="margin-top:22px; animation-delay:600ms">' +
+      '<button class="btn white" style="padding:11px 24px; font-size:14.5px" onclick="followDemo(this)">＋ Follow Genius Weed</button>' +
+      '<div style="color:rgba(255,255,255,.65); font-size:12.5px; margin-top:10px">1.2M fans follow this world · Donick\u2019s announcements land here first</div>' +
+    '</div>' +
+    '<div class="stack" style="margin-top:26px">' +
+      '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="next()"><div style="font-weight:700; font-size:16px">Participate</div></button>' +
+      '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGeniusWeedSection(\'league\')"><div style="font-weight:700; font-size:16px">Join the Official Genius Weed League</div></button>' +
+      '<button class="card click" style="padding:18px; font:inherit; text-align:left" onclick="openGeniusWeedSection(\'recognition\')"><div style="font-weight:700; font-size:16px">Possible Official Experiences &amp; Recognition</div></button>' +
+    '</div>' +
+  '</div>';
+}
+
+function openGeniusWeedSection(section){
+  var title = section === "participate" ? "Participate" : section === "league" ? "Join the Official Genius Weed League" : "Possible Official Experiences & Recognition";
+  var league = ["Weekly Challenges","XP","Badges","Leaderboards","Genius Weed MVP"];
+  var recognition = ["Your work featured in the Official Fan Companion.","Winning creations spotlighted on the show’s official channels.","Premieres · creator Q&As · Genius Weed fan events.","Official merchandise produced with your name on the tag."];
+  var list = section === "participate" ? EXPERIENCES.map(function(item){ return item.title + " — " + item.body; }) : section === "league" ? league : recognition;
+  var items = list.map(function(item){ return '<li style="font-size:14px; margin:9px 0; line-height:1.5">' + item + '</li>'; }).join("");
+  var m = document.getElementById("peek");
+  if (!m) return;
+  m.innerHTML = '<div class="panel" onclick="event.stopPropagation()">' +
+    '<div style="height:90px; background:' + WORLDS.gw.grad + '"></div>' +
+    '<div style="padding:28px">' +
+      '<div style="font-size:12px; font-weight:700; letter-spacing:.12em">GENIUS WEED</div>' +
+      '<div style="font-weight:700; font-size:22px; margin-top:12px">' + title + '</div>' +
+      '<ul style="margin:14px 0 0; padding-left:20px">' + items + '</ul>' +
+      '<div style="margin-top:20px"><button class="btn" style="width:100%" onclick="openGeniusWeedCategories()">Back to Genius Weed</button></div>' +
+    '</div></div>';
+}
+
+function scExperience(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var cards = EXPERIENCES.map(function(p, i){
+    return '<div class="card click rise" style="animation-delay:' + (i*100) + 'ms" onclick="pickPrompt(' + i + ')">' +
+      '<div style="font-weight:700; font-size:18px; letter-spacing:-.02em">' + p.title + '</div>' +
+      '<div style="font-size:14.5px; color:var(--muted); line-height:1.55; margin-top:6px">' + p.body + '</div></div>';
+  }).join("");
+  var vgrads = [WORLDS.gw.grad, WORLDS.ul.grad, WORLDS.lf.grad];
+  var vh = [["@maya.d","❤️ 12.4K"],["@jayden","❤️ 9.1K"],["@sofia.o","❤️ 7.8K"]];
+  var vids = vh.map(function(h, i){
+    return '<div class="fanvid rise" style="background:' + vgrads[i] + '; animation-delay:' + (i*90) + 'ms">' +
+      '<div class="play">▶</div><div class="cap">' + h[0] + ' · ' + h[1] + '</div>' +
+      '<div class="bar" style="animation-delay:' + (i*700) + 'ms"></div></div>';
+  }).join("");
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow gold">🏆 This Week\u2019s Featured Experiences</div>' +
+    '<p class="sub">Every prize lives in the official world around the show — the channels, the showcases, the merch, the shows. Never inside the episodes themselves.</p>' +
+    '<div style="max-width:330px; margin:30px auto 0">' +
+      '<div style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px">This week\u2019s featured fan videos</div>' +
+      '<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px">' + vids + '</div>' +
+      '<div style="margin-top:12px; font-size:13px; font-weight:600; color:var(--gold)">⭐ Your video could be here by Friday.</div>' +
+    '</div>' +
+    '<div style="max-width:640px; margin:28px auto 0; font-size:13.5px; line-height:1.55; color:var(--muted)">Please click on any of the buttons below for a sampling of additional layers of the EWEy experience.</div>' +
+    '<div class="stack" style="margin-top:10px">' + cards + '</div>' +
+    '<div style="margin-top:24px; font-size:13.5px; color:var(--muted)">📱 Vertical · One minute · Straight from your phone</div>' +
+  '</div>';
+}
+
+function scCreate(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var s = {mock:"⬆️", label:"Upload your 1-minute vertical"};
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow gold">' + S.prompt.title + '</div>' +
+    '<h1 class="md">Create your moment.</h1>' +
+    '<div style="max-width:560px; margin:36px auto 0">' +
+      '<div class="card" style="padding:28px">' +
+        '<div style="display:flex; align-items:center; gap:14px">' +
+          '<div style="width:56px; height:56px; border-radius:16px; background:var(--canvas); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:26px">' + s.mock + '</div>' +
+          '<div><div style="font-weight:700; font-size:15.5px">' + s.label + '</div>' +
+          '<div style="font-size:13px; color:var(--muted); margin-top:2px">Genius Weed · Week 4 Challenge</div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:28px"><button class="btn gold big" onclick="next()">UPLOAD VIDEO</button></div>' +
+      '<div style="margin-top:14px; font-size:12.5px; color:var(--muted)">Creator approval required for anything that becomes official.</div>' +
+    '</div></div>';
+}
+
+function scMosaic(){
+  var el = document.getElementById("scene");
+  el.className = "scene darkscene";
+  el.style.background = "";
+  el.innerHTML = '<div class="cinema" style="text-align:center; padding:24px">' +
+    '<div class="pulse" style="width:74px; height:74px; margin:0 auto; border-radius:22px; background:var(--goldsoft); display:flex; align-items:center; justify-content:center; font-size:32px; box-shadow:0 0 60px rgba(198,160,46,.53)">✨</div>' +
+    '<div class="thread" style="height:90px; width:2px; margin:18px auto 0; background:linear-gradient(var(--gold), transparent)"></div>' +
+    '<div style="color:#fff; font-size:clamp(20px,3.6vw,28px); font-weight:600; letter-spacing:-.02em; margin-top:8px">Your creativity is weaving into the world.</div>' +
+    '<div style="color:rgba(255,255,255,.5); font-size:14.5px; margin-top:10px">Pending creator review</div>' +
+  '</div>';
+  later(function(){
+    var grads = [WORLDS.gw.grad, WORLDS.ul.grad, WORLDS.lf.grad, "linear-gradient(135deg,#0B1220,#2A3A5C)"];
+    var tiles = "";
+    for (var i = 0; i < 91; i++){
+      tiles += '<div class="mtile tile" style="background:' + grads[i%4] + '; animation-delay:' + Math.floor(Math.random()*2400) + 'ms">' + MOSAIC_ICONS[i%MOSAIC_ICONS.length] + '</div>';
+    }
+    el.innerHTML = '<div id="mosaicgrid">' + tiles + '</div><div id="mstats"></div>';
+    later(function(){
+      document.getElementById("mosaicgrid").className = "zoom";
+      document.getElementById("mstats").innerHTML =
+        '<div class="cinema" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; animation-delay:600ms">' +
+          '<div style="color:#fff; font-size:clamp(40px,7vw,64px); font-weight:700; letter-spacing:-.035em">12,487</div>' +
+          '<div style="color:rgba(255,255,255,.75); font-size:15px; letter-spacing:.14em; text-transform:uppercase; font-weight:500">Creators participating</div>' +
+          '<div style="display:flex; gap:40px; margin-top:30px; flex-wrap:wrap; justify-content:center">' +
+            '<div><div style="color:var(--gold); font-size:30px; font-weight:700">73</div><div style="color:rgba(255,255,255,.55); font-size:13px">Countries</div></div>' +
+            '<div><div style="color:var(--gold); font-size:30px; font-weight:700">1</div><div style="color:rgba(255,255,255,.55); font-size:13px">Story world</div></div>' +
+          '</div>' +
+          '<div style="color:rgba(255,255,255,.55); font-size:13.5px; margin-top:36px">You haven\u2019t seen the best part yet…</div>' +
+          '<div style="margin-top:14px"><button class="btn white" onclick="next()">What happens next</button></div>' +
+          '<div style="position:absolute; bottom:20px; font-size:11.5px; color:rgba(255,255,255,.35)">Illustrative figures</div>' +
+        '</div>';
+    }, 3000);
+  }, 2200);
+}
+
+function scAI(){
+  var el = document.getElementById("scene");
+  el.className = "scene"; el.style.background = "";
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow">AI organizes · Creators decide</div>' +
+    '<h1 class="md">Every submission.<br>One clear signal.</h1>' +
+    '<div style="max-width:480px; margin:36px auto 0">' +
+      '<div class="card" style="padding:26px">' +
+        '<div id="aisub" class="rise" style="display:inline-flex; align-items:center; gap:8px; background:var(--canvas); border:1px solid var(--line); border-radius:999px; padding:8px 16px; font-size:13.5px; font-weight:600">🎥 Your one-minute video enters</div>' +
+        '<div id="aidots" style="position:relative; height:148px; margin-top:18px"></div>' +
+        '<div style="display:flex; justify-content:space-around; font-size:11.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-top:6px"><span>Sorted</span><span>Tagged</span><span>Top picks</span></div>' +
+        '<div class="ai-verdict" id="airv">' +
+          '<div style="font-weight:700; font-size:15px">🎉 Yours advanced to Producer Review</div>' +
+          '<div style="font-size:13.5px; color:var(--muted); margin-top:4px">Donick Cary picks this week\u2019s finalists.</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top:22px; font-size:clamp(17px,2.6vw,20px); font-weight:700; letter-spacing:-.02em; color:var(--ink)">AI organizes. <span style="color:var(--gold)">Creators decide.</span></div>' +
+      '<div style="margin-top:8px; font-size:13px; color:var(--muted)">Nothing becomes official without the creator\u2019s approval.</div>' +
+      '<div style="margin-top:24px; opacity:0; transition:opacity .6s" id="aibtn"><button class="btn" onclick="next()">Continue</button></div>' +
+    '</div></div>';
+  var box = document.getElementById("aidots");
+  var W = box.clientWidth || 300, cols = [W*0.17, W*0.5, W*0.83];
+  var grads = [WORLDS.gw.grad, WORLDS.ul.grad, WORLDS.lf.grad];
+  var dots = [], targets = [];
+  for (var i = 0; i < 66; i++){
+    var d = document.createElement("span");
+    var gold = i === 65;
+    d.style.cssText = "position:absolute; width:" + (gold ? 12 : 8) + "px; height:" + (gold ? 12 : 8) + "px; border-radius:3px; background:" + (gold ? "var(--gold)" : grads[i % 3]) + "; left:" + (Math.random()*W).toFixed(0) + "px; top:" + (Math.random()*140).toFixed(0) + "px; opacity:0; transform:translate(-50%,-50%)" + (gold ? "; box-shadow:0 0 14px rgba(198,160,46,.6); z-index:2" : "") + "; transition:left 1.1s cubic-bezier(.2,.8,.2,1) " + (Math.random()*500).toFixed(0) + "ms, top 1.1s cubic-bezier(.2,.8,.2,1) " + (Math.random()*500).toFixed(0) + "ms, opacity .6s";
+    box.appendChild(d); dots.push(d);
+    var col = gold ? 2 : i % 3;
+    targets.push([cols[col] + (Math.random()*14 - 7), gold ? 8 : 20 + (i % 16) * 8]);
+  }
+  later(function(){
+    for (var k = 0; k < dots.length; k++){
+      dots[k].style.opacity = "1";
+      dots[k].style.left = targets[k][0].toFixed(0) + "px";
+      dots[k].style.top = targets[k][1].toFixed(0) + "px";
+    }
+  }, 700);
+  later(function(){ document.getElementById("airv").className = "ai-verdict show"; }, 2400);
+  later(function(){ document.getElementById("aibtn").style.opacity = "1"; }, 3000);
+}
+
+function scContinues(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var xg = ["linear-gradient(135deg,#1B3A5C,#3E7CB1)","linear-gradient(135deg,#5C1B4A,#B13E8E)", WORLDS.ul.grad, "linear-gradient(135deg,#3A2E10,#8A6E14)"];
+  var xf = [["@tny.hoops","🏈 Sports"],["@lila.sings","🎵 Music"],["@rex.and.me","🐶 Unleashed"],["@docwatcher","🎥 Docs"]];
+  var xvids = xf.map(function(h, i){
+    return '<div class="fanvid rise" style="background:' + xg[i] + '; animation-delay:' + (i*90) + 'ms">' +
+      '<div class="play">▶</div><div class="cap">' + h[0] + '<br>' + h[1] + '</div>' +
+      '<div class="bar" style="animation-delay:' + (i*550) + 'ms"></div></div>';
+  }).join("");
+  var shows = [["⭐","Creator\u2019s Picks"],["😂","Funniest Moments"],["🎨","Top Fan Designs"],["🎭","Best In Character"],["🎬","Official Companion Highlights"],["🏆","Community Favorites"]];
+  var tiles = shows.map(function(s, i){
+    return '<div class="card center rise" style="padding:24px 14px; animation-delay:' + (i*70) + 'ms">' +
+      '<div style="font-size:28px">' + s[0] + '</div>' +
+      '<div style="font-weight:600; font-size:14px; margin-top:10px">' + s[1] + '</div></div>';
+  }).join("");
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow gold">Official showcases</div>' +
+    '<h1>The story continues<br>between episodes.</h1>' +
+    '<p class="sub">The best submissions become creator-curated companion content — fresh, official entertainment while the show is off the air.</p>' +
+    '<div style="max-width:440px; margin:30px auto 0">' +
+      '<div style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:10px">Playing now, across every world</div>' +
+      '<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px">' + xvids + '</div>' +
+    '</div>' +
+    '<div class="grid shows">' + tiles + '</div>' +
+    '<div style="margin-top:34px"><button class="btn" onclick="next()">What could you win?</button></div>' +
+  '</div>';
+}
+
+function scBeyond(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var values = [
+    ["🛍️","Limited-edition merchandise","Winning fan designs become official products — credited, licensed, revenue-shared."],
+    ["💼","Talent discovery","\u201CWe found our next poster artist through EWEy.\u201D"],
+    ["🎤","Live experiences","Fan showcases, premieres, and events inside the world."],
+    ["🤝","Sponsored experiences","Brands sponsor participation instead of interrupting it."]
+  ];
+  var strips = [WORLDS.gw.grad, WORLDS.ul.grad, WORLDS.lf.grad, WORLDS.gw.grad, WORLDS.ul.grad].map(function(g){
+    return '<div style="flex:1; height:44px; border-radius:6px; background:' + g + '; opacity:.9"></div>';
+  }).join("");
+  var rows = values.map(function(v){
+    return '<div style="display:flex; gap:12px; align-items:flex-start">' +
+      '<div style="font-size:20px; line-height:1">' + v[0] + '</div>' +
+      '<div><div style="font-weight:600; font-size:14.5px">' + v[1] + '</div>' +
+      '<div style="font-size:13px; color:var(--muted); line-height:1.5">' + v[2] + '</div></div></div>';
+  }).join("");
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow gold">Recognition is the reward</div>' +
+    '<h1 class="md">Your creativity, made official.</h1>' +
+    '<div style="max-width:560px; margin:34px auto 0">' +
+      '<div class="card" style="padding:0; overflow:hidden">' +
+        '<div style="background:var(--dark); padding:26px 26px 22px">' +
+          '<div style="font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:rgba(255,255,255,.45); font-weight:600">Now streaming</div>' +
+          '<div style="color:#fff; font-weight:700; font-size:21px; margin-top:8px; letter-spacing:-.02em">Genius Weed — Fan Highlights: Vol. 1</div>' +
+          '<div style="display:flex; gap:6px; margin-top:14px">' + strips + '</div>' +
+          '<div style="margin-top:16px; font-size:12.5px; color:var(--gold); font-weight:600">Audience Contributions Powered by EWEy</div>' +
+        '</div>' +
+        '<div style="padding:18px 26px; display:grid; gap:14px">' + rows + '</div>' +
+      '</div>' +
+      '<div style="margin-top:28px; font-size:13px; color:var(--muted)">This is where creators get excited…</div>' +
+      '<div style="margin-top:12px"><button class="btn" onclick="next()">Now see the creator\u2019s side</button></div>' +
+    '</div></div>';
+}
+
+function scCreator(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var stats = [["12,487","Entries"],["73","Countries"],["2.3M","Votes"],["91%","Positive sentiment"]];
+  var statHtml = stats.map(function(s){
+    return '<div><div style="font-size:26px; font-weight:700; letter-spacing:-.02em">' + s[0] + '</div>' +
+      '<div style="font-size:12.5px; color:var(--muted)">' + s[1] + '</div></div>';
+  }).join("");
+  var bars = [28,36,44,42,58,74,100].map(function(h, i){
+    return '<div class="rise" style="flex:1; height:' + h + '%; border-radius:4px 4px 0 0; background:' + (i === 6 ? "var(--gold)" : "var(--goldsoft)") + '; animation-delay:' + (i*90) + 'ms"></div>';
+  }).join("");
+  var chips = ["Video","Design","Writing","Audio"].map(function(t, i){
+    return '<span class="typechip' + (i < 2 ? " on" : "") + '">' + t + '</span>';
+  }).join("");
+  el.innerHTML = '<div class="wrap wide">' +
+    '<div class="eyebrow">The creator\u2019s cockpit</div>' +
+    '<h1 class="md">Creators launch in minutes.<br>And own every insight.</h1>' +
+    '<div class="grid creator">' +
+      '<div class="card">' +
+        '<div style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">Create new experience</div>' +
+        '<div style="margin-top:14px; background:var(--canvas); border-radius:12px; padding:14px 16px; font-size:14.5px; border:1px solid var(--line); line-height:1.5; font-style:italic">\u201CFilm you and your friends joking about the time Sabatini\u2019s cousin did…\u201D</div>' +
+        '<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:14px">' + chips + '</div>' +
+        '<div style="margin-top:18px"><button class="btn gold" style="width:100%; padding:13px 24px" id="pubbtn" onclick="publishDemo()">Publish experience</button></div>' +
+        '<div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--line)">' +
+          '<div style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">Trending now</div>' +
+          '<div style="font-weight:700; font-size:14.5px; margin-top:8px">\u201CThe Time Sabatini\u2019s Cousin…\u201D <span style="color:var(--gold)">▲ 2,114 today</span></div>' +
+          '<div style="display:flex; gap:8px; margin-top:10px">' +
+            '<button class="typechip" style="cursor:pointer; font:inherit; font-size:12.5px; font-weight:600; background:#fff" onclick="approveDemo(this)">✓ Approve</button>' +
+            '<button class="typechip" style="cursor:pointer; font:inherit; font-size:12.5px; font-weight:600; background:#fff" onclick="this.className=\'typechip on\'; this.textContent=\'⭐ Featured\'">⭐ Feature</button>' +
+            '<span class="typechip">🛍️ Launch merch</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">Participation dashboard</div>' +
+        '<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px">' + statHtml + '</div>' +
+        '<div style="display:flex; gap:5px; align-items:flex-end; height:40px; margin-top:16px">' + bars + '</div>' +
+        '<div style="font-size:12px; color:var(--muted); margin-top:6px">Fan growth <b style="color:var(--ink)">+212%</b> this season</div>' +
+        '<div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line); display:flex; justify-content:space-between; font-size:13.5px"><span>👥 World followers</span><b>1.2M</b></div>' +
+        '<div style="display:flex; justify-content:space-between; font-size:13.5px; margin-top:8px"><span>🛍️ Merch revenue</span><b>$48K</b></div>' +
+        '<div style="display:flex; justify-content:space-between; font-size:13.5px; margin-top:8px"><span>🤝 Active sponsors</span><b>6</b></div>' +
+        '<div style="display:flex; justify-content:space-between; font-size:13.5px; margin-top:8px"><span>⭐ Featured creators</span><b>24</b></div>' +
+        '<div style="margin-top:12px; font-size:10.5px; color:var(--muted)">Illustrative figures</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:24px; font-size:13.5px; color:var(--muted)">Every interaction generates audience intelligence the creator owns — not an outside platform.</div>' +
+    '<div style="margin-top:26px"><button class="btn" onclick="next()">One last thing</button></div>' +
+  '</div>';
+}
+
+function approveDemo(b){
+  b.style.background = "#2E7D4F"; b.style.color = "#fff"; b.style.borderColor = "#2E7D4F";
+  b.textContent = "✓ Approved";
+}
+
+function publishDemo(){
+  var b = document.getElementById("pubbtn");
+  b.className = "btn green"; b.style.width = "100%";
+  b.innerHTML = "&#10003; Live in your world";
+}
+
+function followDemo(b){
+  b.style.background = "#2E7D4F"; b.style.color = "#fff";
+  b.textContent = "✓ Following";
+}
+
+function scWin(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  var prizes = [
+    ["🎟️","Premiere tickets","Front-row at the premiere. Courtside at the game. Backstage at the show."],
+    ["💰","Cash prizes","Weekly challenges with real money on the line."],
+    ["🍽️","Lunch with the artist","The top fan creation gets a seat at the table."],
+    ["🎬","Step on set","Set visits, meet the cast, behind-the-scenes access."],
+    ["🏆","Official credit","Your name in the world — merch tags, credits, showcases."],
+    ["❤️","Give back","Fun challenges that raise real money for nonprofits — the world donates for every entry."]
+  ];
+  var cards = prizes.map(function(p, i){
+    return '<div class="card rise" style="padding:22px; animation-delay:' + (i*80) + 'ms">' +
+      '<div style="font-size:28px">' + p[0] + '</div>' +
+      '<div style="font-weight:700; font-size:16px; margin-top:10px; letter-spacing:-.02em">' + p[1] + '</div>' +
+      '<div style="font-size:13.5px; color:var(--muted); line-height:1.5; margin-top:5px">' + p[2] + '</div></div>';
+  }).join("");
+  el.innerHTML = '<div class="wrap wide">' +
+    '<div class="eyebrow gold">Real stakes</div>' +
+    '<h1>What could you win?</h1>' +
+    '<p class="sub">Participation comes with real rewards — set by the creator, delivered by the world.</p>' +
+    '<div class="grid powers" style="max-width:820px">' + cards + '</div>' +
+    '<div style="margin-top:24px; font-size:13.5px; color:var(--muted); line-height:1.6">And when your work gets featured, you earn points — <span style="font-weight:600; color:var(--ink)">recognition that adds up, every time it plays.</span></div>' +
+    '<div style="margin-top:28px"><button class="btn" onclick="next()">Happening near you</button></div>' +
+  '</div>';
+}
+
+function scLocal(){
+  var el = document.getElementById("scene");
+  el.className = "scene";
+  el.innerHTML = '<div class="wrap">' +
+    '<div class="eyebrow">Story worlds live in the real world</div>' +
+    '<h1 class="md">What\u2019s happening in your city today?</h1>' +
+    '<p class="sub">Pop-ups, screenings, challenges — every world can show up where its fans actually live.</p>' +
+    '<div style="max-width:420px; margin:34px auto 0">' +
+      '<div class="card center" style="padding:26px">' +
+        '<div style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted)">Enter your ZIP code</div>' +
+        '<div style="display:flex; gap:10px; margin-top:14px">' +
+          '<input id="zipin" inputmode="numeric" maxlength="5" placeholder="02554" ' +
+            'style="flex:1; font:inherit; font-size:18px; font-weight:600; letter-spacing:.14em; text-align:center; padding:13px 14px; border-radius:14px; border:1px solid var(--line); background:var(--canvas); color:var(--ink); outline:none; min-width:0" ' +
+            'onkeydown="if(event.key===\'Enter\')showLocal()">' +
+          '<button class="btn gold" style="padding:13px 22px; white-space:nowrap" onclick="showLocal()">Show me</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="localout"></div>' +
+      '<div id="localskip" style="margin-top:16px"><button onclick="next()" style="font:inherit; font-size:13px; font-weight:600; color:var(--muted); background:none; border:none; cursor:pointer">Skip for now</button></div>' +
+    '</div></div>';
+  later(function(){ var z = document.getElementById("zipin"); if (z) z.focus(); }, 500);
+}
+
+function showLocal(){
+  var z = (document.getElementById("zipin").value || "").replace(/[^0-9]/g,"");
+  if (z.length < 5) z = "02554";
+  var happenings = [
+    ["☕","Genius Weed pop-up caf\u00E9","Tomorrow \u00B7 2.1 miles away \u00B7 first 50 fans get the limited-edition mug"],
+    ["🎬","Fan showcase screening","Tonight \u00B7 creator-picked highlights on the big screen"],
+    ["📚","Bookstore takeover","Saturday \u00B7 signed editions + live fan readings"],
+    ["🎤","Festival fan stage","This weekend \u00B7 top EWEy creators perform live"],
+    ["❤️","Nonprofit flash challenge","Post a 60-second video today \u2014 the show donates for every entry"]
+  ];
+  var cards = happenings.map(function(h, i){
+    return '<div class="card rise" style="animation-delay:' + (i*140) + 'ms; display:flex; gap:14px; align-items:flex-start; padding:18px 20px">' +
+      '<div style="font-size:24px; line-height:1">' + h[0] + '</div>' +
+      '<div><div style="font-weight:700; font-size:15.5px; letter-spacing:-.02em">' + h[1] + '</div>' +
+      '<div style="font-size:13px; color:var(--muted); line-height:1.5; margin-top:3px">' + h[2] + '</div></div></div>';
+  }).join("");
+  document.getElementById("localout").innerHTML =
+    '<div style="margin-top:22px; text-align:left">' +
+      '<div class="rise" style="font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin-bottom:12px; text-align:center">Near ' + esc(z) + ' this week</div>' +
+      '<div style="display:grid; gap:12px">' + cards + '</div>' +
+      '<div class="rise" style="animation-delay:500ms; margin-top:16px; background:var(--goldsoft); border:1px solid rgba(198,160,46,.27); border-radius:14px; padding:14px 16px; font-size:13.5px; line-height:1.5; color:#8A6E14; font-weight:600; text-align:center">🎟️ Local winners this week take home premiere tickets + cash prizes</div>' +
+      '<div class="rise" style="animation-delay:580ms; margin-top:12px; font-size:12.5px; color:var(--muted); text-align:center">Restaurants · Venues · Festivals · Museums · Bookstores — every world can show up in yours.</div>' +
+      '<div class="rise" style="animation-delay:650ms; margin-top:22px"><button class="btn big" onclick="next()">Beyond the story</button></div>' +
+    '</div>';
+  document.getElementById("localskip").style.display = "none";
+  document.getElementById("zipin").blur();
+}
+
+function scEnd(){
+  var el = document.getElementById("scene");
+  el.className = "scene darkscene";
+  el.innerHTML = '<div class="cinema" style="color:#fff; font-size:clamp(24px,4.6vw,38px); font-weight:600; letter-spacing:-.02em; max-width:560px; line-height:1.3">Today you experienced one story world.</div>';
+  later(function(){
+    var pills = CATEGORIES.map(function(c, i){
+      return '<span class="catpill tile" style="animation-delay:' + (i*120) + 'ms">' + c[0] + ' ' + c[1] + '</span>';
+    }).join("");
+    el.innerHTML = '<div class="cinema" style="max-width:680px">' +
+      '<div style="color:rgba(255,255,255,.6); font-size:15px; letter-spacing:.12em; text-transform:uppercase; font-weight:500; margin-bottom:24px">Now imagine it for</div>' +
+      '<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center">' + pills + '</div>' +
+    '</div>';
+  }, 2100);
+  later(scEndNetwork, 4600);
+}
+
+function scEndNetwork(){
+  var el = document.getElementById("scene");
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var W = el.clientWidth || window.innerWidth, H = el.clientHeight || window.innerHeight;
+  var cx = W/2, cy = H/2, R = Math.min(W, H) * 0.30;
+  var N = 150, pts = [], parts = "";
+  for (var i = 0; i < N; i++){
+    var a = Math.random() * Math.PI * 2;
+    var r = R * Math.sqrt(Math.random());
+    pts.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r]);
+    var sx = Math.random() * W, sy = Math.random() * H;
+    parts += '<span class="npart" style="position:absolute; left:' + sx.toFixed(0) + 'px; top:' + sy.toFixed(0) + 'px; font-size:' + (10 + Math.random()*7).toFixed(0) + 'px; opacity:0; transform:translate(-50%,-50%); transition:left 2.2s cubic-bezier(.2,.8,.2,1) ' + (Math.random()*800).toFixed(0) + 'ms, top 2.2s cubic-bezier(.2,.8,.2,1) ' + (Math.random()*800).toFixed(0) + 'ms, opacity 1s">' + MOSAIC_ICONS[i % MOSAIC_ICONS.length] + '</span>';
+  }
+  var lines = "";
+  for (var j = 0; j < 220 && lines.split("<line").length < 65; j++){
+    var p1 = pts[Math.floor(Math.random()*N)], p2 = pts[Math.floor(Math.random()*N)];
+    var d = Math.hypot(p1[0]-p2[0], p1[1]-p2[1]);
+    if (d > 12 && d < R*0.55){
+      lines += '<line x1="' + p1[0].toFixed(0) + '" y1="' + p1[1].toFixed(0) + '" x2="' + p2[0].toFixed(0) + '" y2="' + p2[1].toFixed(0) + '" stroke="rgba(198,160,46,.3)" stroke-width="1"/>';
+    }
+  }
+  var ringR = Math.min(R * 1.5, Math.min(cx, cy) - 44);
+  var eco = "", spokes = "";
+  for (var e = 0; e < CATEGORIES.length; e++){
+    var ea = -Math.PI/2 + e * (Math.PI*2 / CATEGORIES.length);
+    var ex = cx + Math.cos(ea) * ringR, ey = cy + Math.sin(ea) * ringR;
+    eco += '<span class="econode" style="position:absolute; left:' + ex.toFixed(0) + 'px; top:' + ey.toFixed(0) + 'px; transform:translate(-50%,-50%); white-space:nowrap; font-size:11.5px; font-weight:600; color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.2); border-radius:999px; padding:5px 11px; opacity:0; transition:opacity .8s ' + (e*100) + 'ms">' + CATEGORIES[e][0] + ' ' + CATEGORIES[e][1] + '</span>';
+    spokes += '<line x1="' + (cx + Math.cos(ea)*R*0.85).toFixed(0) + '" y1="' + (cy + Math.sin(ea)*R*0.85).toFixed(0) + '" x2="' + ex.toFixed(0) + '" y2="' + ey.toFixed(0) + '" stroke="rgba(198,160,46,.28)" stroke-width="1"/>';
+  }
+  el.innerHTML =
+    '<div id="net" style="position:absolute; inset:0; overflow:hidden; transition:opacity 1.2s, filter 1.2s">' +
+      '<div id="netglow" style="position:absolute; left:50%; top:50%; width:' + (R*2.7).toFixed(0) + 'px; height:' + (R*2.7).toFixed(0) + 'px; transform:translate(-50%,-50%); border-radius:50%; background:radial-gradient(circle, rgba(198,160,46,.3), transparent 65%); opacity:0; transition:opacity 1.6s"></div>' +
+      '<svg id="netlines" width="' + W + '" height="' + H + '" style="position:absolute; inset:0; opacity:0; transition:opacity 1.4s">' + lines + '</svg>' +
+      '<svg id="ecolines" width="' + W + '" height="' + H + '" style="position:absolute; inset:0; opacity:0; transition:opacity 1.2s">' + spokes + '</svg>' +
+      parts + eco +
+    '</div>' +
+    '<div id="networds" style="position:relative; z-index:2; text-align:center; padding:24px">' +
+      '<div id="nw1" style="color:#fff; font-size:clamp(22px,4.2vw,34px); font-weight:600; letter-spacing:-.02em; line-height:1.3; opacity:0; transition:opacity 1.1s, transform 1.1s; transform:translateY(14px)">Every story becomes a community.</div>' +
+      '<div id="nw2" style="color:#fff; font-size:clamp(22px,4.2vw,34px); font-weight:600; letter-spacing:-.02em; line-height:1.3; margin-top:8px; opacity:0; transition:opacity 1.1s, transform 1.1s; transform:translateY(14px)">Every fan becomes a creator.</div>' +
+      '<div id="nw2b" style="color:var(--gold); font-size:clamp(22px,4.2vw,34px); font-weight:600; letter-spacing:-.02em; line-height:1.3; margin-top:8px; opacity:0; transition:opacity 1.1s, transform 1.1s; transform:translateY(14px)">Every creator builds a world.</div>' +
+      '<div id="nw3" style="opacity:0; transition:opacity 1.4s">' +
+        '<div style="color:#fff; font-size:clamp(44px,8vw,68px); font-weight:700; letter-spacing:-.04em; margin-top:38px">EWE<span style="color:var(--gold)">y</span></div>' +
+        '<div style="color:rgba(255,255,255,.6); font-size:13px; letter-spacing:.14em; text-transform:uppercase; font-weight:500; margin-top:12px">The Participation Layer for All IP</div>' +
+        '<div style="color:rgba(255,255,255,.4); font-size:12.5px; margin-top:8px">Everyone Wins. Especially You.</div>' +
+      '</div>' +
+      '<div id="nw4" style="opacity:0; transition:opacity 1.2s; margin-top:34px"><button class="btn white" onclick="restart()">Experience it again</button></div>' +
+    '</div>';
+  function converge(){
+    var els = el.querySelectorAll(".npart");
+    for (var k = 0; k < els.length; k++){
+      els[k].style.left = pts[k][0].toFixed(0) + "px";
+      els[k].style.top = pts[k][1].toFixed(0) + "px";
+      els[k].style.opacity = ".9";
+    }
+  }
+  function weave(){
+    document.getElementById("netlines").style.opacity = "1";
+    document.getElementById("netglow").style.opacity = "1";
+  }
+  function eco_in(){
+    document.getElementById("ecolines").style.opacity = "1";
+    var ns = el.querySelectorAll(".econode");
+    for (var q = 0; q < ns.length; q++) ns[q].style.opacity = "1";
+  }
+  function dim(){
+    var n = document.getElementById("net");
+    n.style.opacity = ".28"; n.style.filter = "blur(1px)";
+  }
+  function word(id){
+    var w = document.getElementById(id);
+    w.style.opacity = "1"; w.style.transform = "none";
+  }
+  if (reduce){
+    converge(); weave(); eco_in(); dim(); word("nw1"); word("nw2"); word("nw2b"); word("nw3"); word("nw4");
+    var all = el.querySelectorAll(".npart, .econode, #netlines, #ecolines, #netglow, #net, #nw1, #nw2, #nw2b, #nw3, #nw4");
+    for (var m = 0; m < all.length; m++) all[m].style.transition = "none";
+    return;
+  }
+  later(function(){ requestAnimationFrame(converge); }, 60);
+  later(weave, 2300);
+  later(eco_in, 3500);
+  later(function(){ dim(); word("nw1"); }, 5400);
+  later(function(){ word("nw2"); }, 6600);
+  later(function(){ word("nw2b"); }, 7800);
+  later(function(){ word("nw3"); }, 9400);
+  later(function(){ word("nw4"); }, 10800);
+}
+
+// ————— Router —————
+function render(){
+  var el = document.getElementById("scene");
+  el.style.background = "";
+  el.scrollTop = 0;
+  document.getElementById("chrome").style.transform = "translateY(0)";
+  var id = SCENES[S.i];
+  renderChrome();
+  if (id === "cold") scCold();
+  else if (id === "worldtype") scWorldType();
+  else if (id === "storyworld") scStoryWorld();
+  else if (id === "entry") scEntry();
+  else if (id === "experience") scExperience();
+  else if (id === "create") scCreate();
+  else if (id === "mosaic") scMosaic();
+  else if (id === "ai") scAI();
+  else if (id === "continues") scContinues();
+  else if (id === "win") scWin();
+  else if (id === "local") scLocal();
+  else if (id === "beyond") scBeyond();
+  else if (id === "creator") scCreator();
+  else if (id === "end") scEnd();
+  el.classList.remove("scenein"); void el.offsetWidth; el.classList.add("scenein");
+}
+var OFFICIAL_STATEMENT = "Official participation alongside the canon. Never rewriting it. Always celebrating it.";
+function centerOfficialStatements(root){
+  if (!root || root.nodeType !== 1) return;
+  var nodes = [];
+  if (root.matches && root.matches("div")) nodes.push(root);
+  if (root.querySelectorAll) nodes = nodes.concat(Array.prototype.slice.call(root.querySelectorAll("div")));
+  nodes.forEach(function(node){
+    if (node.textContent.trim() === OFFICIAL_STATEMENT) node.style.textAlign = "center";
+  });
+}
+var officialStatementObserver = new MutationObserver(function(mutations){
+  mutations.forEach(function(mutation){
+    Array.prototype.forEach.call(mutation.addedNodes, centerOfficialStatements);
+  });
+});
+officialStatementObserver.observe(document.body, {childList:true, subtree:true});
+centerOfficialStatements(document.body);
+var fb = document.getElementById("fallback");
+if (fb) fb.remove();
+render();
+</script>
+</body>
+</html>

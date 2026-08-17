@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --gold: #c6a02e;
+  --dark: #060a14;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+.prototype-shell,
+.prototype-shell iframe {
+  width: 100%;
+  height: 100svh;
+  border: 0;
+  display: block;
+  background: #fafaf8;
+}
+
+.gate {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(198,160,46,.15), transparent 36%),
+    radial-gradient(circle at 80% 85%, rgba(48,63,105,.16), transparent 36%),
+    var(--dark);
+}
+
+.gate form { width: min(440px, 100%); text-align: center; }
+.logo { margin-bottom: 48px; font-size: 28px; font-weight: 800; letter-spacing: -.05em; }
+.logo span { color: var(--gold); }
+.eyebrow { margin: 0 0 18px; color: var(--gold); font-size: 15px; font-weight: 700; letter-spacing: .17em; text-transform: uppercase; }
+.gate h1 { margin: 0; font-size: clamp(54px, 12vw, 68px); line-height: 1; letter-spacing: -.055em; }
+.sub { margin: 20px 0 0; color: rgba(255,255,255,.62); font-size: 20px; }
+.gate-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; margin-top: 32px; }
+.gate input { min-width: 0; padding: 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; outline: 0; background: rgba(255,255,255,.08); color: #fff; font: inherit; font-size: 17px; }
+.gate input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(198,160,46,.12); }
+.gate button { border: 0; border-radius: 14px; padding: 0 22px; background: var(--gold); color: #fff; font: inherit; font-size: 17px; font-weight: 750; cursor: pointer; }
+.error { margin: 12px 0 0; color: #ef8b8b; font-size: 16px; }
